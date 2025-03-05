@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "main": "dist/main.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx watch --include ./src src/main.ts configs/config.yaml",
     "start": "npm run build && npm run fast-start",
     "fast-start": "node dist/main.js configs/config.yaml",
     "build": "npm run clean && npm run fast-build",
-    "fast-build": "NODE_OPTIONS='--max-old-space-size=8192' tsc",
+    "fast-build": "swc src -d dist --strip-leading-paths",
     "clean": "rm -rf dist"
   },
   "repository": {
@@ -40,6 +43,8 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
+    "@swc/cli": "^0.6.0",
+    "@swc/core": "^1.11.7",
     "@types/follow-redirects": "^1.14.4",
     "@types/html-to-text": "^9.0.4",
     "@types/mime-types": "^2.1.4",
@@ -48,5 +53,6 @@
     "@types/ws": "^8.5.14",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
-  }
+  },
+  "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4"
 }

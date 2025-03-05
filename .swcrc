@@ -1,0 +1,18 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  "minify": true,
+  "jsc": {
+    "target": "es2020",
+    "parser": {
+      "syntax": "typescript",
+      "tsx": false
+    },
+    "minify": {
+      "compress": true,
+      "mangle": true,
+      "format": {
+        "comments": false
+      }
+    }
+  }
+}
