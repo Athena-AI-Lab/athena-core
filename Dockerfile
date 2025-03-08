@@ -6,6 +6,6 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm i --frozen-lockfile --prod=false
 COPY . .
-RUN pnpm build && pnpm prune --prod
+RUN pnpm build && pnpm prune --prod && rm -rf src
 EXPOSE 3000
 CMD ["pnpm", "fast-start"]
