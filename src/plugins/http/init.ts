@@ -6,6 +6,7 @@ import { convert } from "html-to-text";
 
 import { Athena, Dict } from "../../core/athena.js";
 import { JinaSearch } from "./jina.js";
+import { ExaSearch } from "./exa.js";
 import { PluginBase } from "../plugin-base.js";
 
 export default class Http extends PluginBase {
@@ -20,6 +21,7 @@ export default class Http extends PluginBase {
   };
 
   jina!: JinaSearch;
+  exa!: ExaSearch;
   boundAthenaPrivateEventHandler!: (name: string, args: Dict<any>) => void;
 
   async load(athena: Athena) {
@@ -27,6 +29,12 @@ export default class Http extends PluginBase {
       this.jina = new JinaSearch({
         baseUrl: this.config.jina.base_url,
         apiKey: this.config.jina.api_key,
+      });
+    }
+    if (this.config.exa) {
+      this.exa = new ExaSearch({
+        baseUrl: this.config.exa.base_url,
+        apiKey: this.config.exa.api_key,
       });
     }
     this.boundAthenaPrivateEventHandler =
@@ -141,6 +149,59 @@ export default class Http extends PluginBase {
         }),
       });
     }
+    if (this.config.exa) {
+      athena.registerTool({
+        name: "http/exa-search",
+        desc: "Searches the web for information using Exa API.",
+        args: {
+          query: {
+            type: "string",
+            desc: "The query to search for.",
+            required: true,
+          },
+        },
+        retvals: {
+          results: {
+            type: "array",
+            desc: "The results of the search.",
+            required: true,
+            of: {
+              type: "object",
+              desc: "A single search result.",
+              of: {
+                title: {
+                  type: "string",
+                  desc: "The title of the result.",
+                  required: true,
+                },
+                url: {
+                  type: "string",
+                  desc: "The URL of the result.",
+                  required: true,
+                },
+                text: {
+                  type: "string",
+                  desc: "Text content snippet.",
+                  required: true,
+                },
+              },
+              required: true,
+            },
+          },
+        },
+        fn: async (args: Dict<any>) => {
+          const results = await this.exa.search(args.query);
+          return { results };
+        },
+        explain_args: (args: Dict<any>) => ({
+          summary: `Searching the web with Exa for ${args.query}...`,
+        }),
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => ({
+          summary: `Found ${retvals.results.length} results with Exa for ${args.query}.`,
+          details: JSON.stringify(retvals.results),
+        }),
+      });
+    }
     athena.registerTool({
       name: "http/download-file",
       desc: "Downloads a file from an HTTP/HTTPS URL.",
@@ -209,6 +270,9 @@ export default class Http extends PluginBase {
     if (this.config.jina) {
       athena.deregisterTool("http/search");
     }
+    if (this.config.exa) {
+      athena.deregisterTool("http/exa-search");
+    }
     athena.deregisterTool("http/download-file");
   }
 
@@ -218,6 +282,12 @@ export default class Http extends PluginBase {
         this.jina = new JinaSearch({
           baseUrl: this.config.jina.base_url,
           apiKey: args.token,
+        });
+      }
+      if (this.config.exa) {
+        this.exa = new ExaSearch({
+          baseUrl: this.config.exa.base_url,
+          apiKey: this.config.exa.api_key || args.token,
         });
       }
     }

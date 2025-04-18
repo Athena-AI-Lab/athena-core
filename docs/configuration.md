@@ -135,18 +135,24 @@ Enable `file-system` to allow Athena to access your local file system. Athena wi
 
 ### HTTP
 
-Enable `http` for Athena to send HTTP requests, search the web via Jina Search, and download files from the Internet.
+Enable `http` for Athena to send HTTP requests, search the web via Jina Search or Exa Search, and download files from the Internet.
 
 ```yaml
   http:
-    jina:
+    jina: # Optional Jina config
       base_url: https://s.jina.ai
       api_key: your-jina-api-key
+    exa: # Optional Exa config
+      base_url: https://api.exa.ai # Optional, defaults to this
+      api_key: your-exa-api-key   # Required if using Exa
 ```
 
 - `jina`: Configuration for [Jina Search](https://jina.ai/). (Optional)
-  - `base_url`: The base URL of the Jina Search API endpoint.
-  - `api_key`: The API key for the Jina Search API endpoint.
+  - `base_url`: The base URL of the Jina Search API endpoint. (Optional, defaults to `https://s.jina.ai`)
+  - `api_key`: The API key for the Jina Search API endpoint. (Required if using Jina)
+- `exa`: Configuration for [Exa Search](https://exa.ai/). (Optional)
+  - `base_url`: The base URL of the Exa Search API endpoint. (Optional, defaults to `https://api.exa.ai`)
+  - `api_key`: The API key for the Exa Search API endpoint. (Required if using Exa)
 
 ### LLM
 
