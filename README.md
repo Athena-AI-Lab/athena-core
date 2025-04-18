@@ -11,6 +11,10 @@
   <a href="https://athenalab.ai/"><img src="https://img.shields.io/badge/Website-AthenaLab.AI-blue" alt="Website"></a>
 </div>
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Athena-AI-Lab/athena-core&type=Date)](https://www.star-history.com/#Athena-AI-Lab/athena-core&Date)
+
 **Athena** is a production-ready general AI agent built to *do*, not just *think*. It bridges insight with execution, helping you move from idea to results effortlessly.
 
 Some examples of what Athena can do:
