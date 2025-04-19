@@ -12,7 +12,8 @@
     "fast-start": "node dist/main.js configs/config.yaml",
     "build": "npm run clean && npm run fast-build",
     "fast-build": "swc src -d dist --strip-leading-paths",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
