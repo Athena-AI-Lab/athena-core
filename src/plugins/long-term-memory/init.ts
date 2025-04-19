@@ -10,11 +10,6 @@ interface ILongTermMemoryItem {
   created_at: string;
 }
 
-interface VecItemResult {
-  desc: string;
-  data: string;
-}
-
 export default class LongTermMemory extends PluginBase {
   store: Dict<ILongTermMemoryItem> = {};
   openai!: OpenAI;
