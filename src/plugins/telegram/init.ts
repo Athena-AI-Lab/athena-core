@@ -397,136 +397,152 @@ export default class Telegram extends PluginBase {
       },
     });
 
-    athena.registerTool({
-      name: "telegram/send-message",
-      desc: "Send a message to a chat in Telegram.",
-      args: {
-        chat_id: {
-          type: "number",
-          desc: "Unique identifier for the target chat or username of the target channel.",
-          required: true,
+    athena.registerTool(
+      {
+        name: "telegram/send-message",
+        desc: "Send a message to a chat in Telegram.",
+        args: {
+          chat_id: {
+            type: "number",
+            desc: "Unique identifier for the target chat or username of the target channel.",
+            required: true,
+          },
+          reply_to_message_id: {
+            type: "number",
+            desc: "Identifier of the message that will be replied to in the current chat.",
+            required: false,
+          },
+          text: {
+            type: "string",
+            desc: "Text of the message to be sent, 1-4096 characters after entities parsing.",
+            required: true,
+          },
+          photo: {
+            type: "string",
+            desc: "Photo to send. Pass a local filename or a URL.",
+            required: false,
+          },
+          file: {
+            type: "string",
+            desc: "File to send. Pass a local filename or a URL.",
+            required: false,
+          },
+          reply_markup: {
+            type: "object",
+            desc: "Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user.",
+            required: false,
+          },
         },
-        reply_to_message_id: {
-          type: "number",
-          desc: "Identifier of the message that will be replied to in the current chat.",
-          required: false,
-        },
-        text: {
-          type: "string",
-          desc: "Text of the message to be sent, 1-4096 characters after entities parsing.",
-          required: true,
-        },
-        photo: {
-          type: "string",
-          desc: "Photo to send. Pass a local filename or a URL.",
-          required: false,
-        },
-        file: {
-          type: "string",
-          desc: "File to send. Pass a local filename or a URL.",
-          required: false,
-        },
-        reply_markup: {
-          type: "object",
-          desc: "Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user.",
-          required: false,
+        retvals: {
+          message_id: {
+            type: "number",
+            desc: "Unique message identifier inside this chat.",
+            required: true,
+          },
         },
       },
-      retvals: {
-        message_id: {
-          type: "number",
-          desc: "Unique message identifier inside this chat.",
-          required: true,
-        },
-      },
-      fn: async (args: Dict<any>) => {
-        if (args.photo) {
-          const message = await this.bot.sendPhoto(args.chat_id, args.photo, {
-            caption: args.text,
+      {
+        fn: async (args: Dict<any>) => {
+          if (args.photo) {
+            const message = await this.bot.sendPhoto(args.chat_id, args.photo, {
+              caption: args.text,
+              reply_to_message_id: args.reply_to_message_id,
+              reply_markup: args.reply_markup,
+            });
+            return { message_id: message.message_id };
+          }
+          if (args.file) {
+            const message = await this.bot.sendDocument(
+              args.chat_id,
+              args.file,
+              {
+                caption: args.text,
+                reply_to_message_id: args.reply_to_message_id,
+                reply_markup: args.reply_markup,
+              },
+            );
+            return { message_id: message.message_id };
+          }
+          const message = await this.bot.sendMessage(args.chat_id, args.text, {
             reply_to_message_id: args.reply_to_message_id,
             reply_markup: args.reply_markup,
           });
           return { message_id: message.message_id };
-        }
-        if (args.file) {
-          const message = await this.bot.sendDocument(args.chat_id, args.file, {
-            caption: args.text,
-            reply_to_message_id: args.reply_to_message_id,
-            reply_markup: args.reply_markup,
+        },
+      },
+    );
+
+    athena.registerTool(
+      {
+        name: "telegram/edit-message",
+        desc: "Edit a message in Telegram.",
+        args: {
+          chat_id: {
+            type: "number",
+            desc: "Unique identifier for the target chat or username of the target channel.",
+            required: true,
+          },
+          message_id: {
+            type: "number",
+            desc: "Unique message identifier inside this chat.",
+            required: true,
+          },
+          text: {
+            type: "string",
+            desc: "New text of the message.",
+            required: true,
+          },
+        },
+        retvals: {
+          status: {
+            type: "string",
+            desc: "Status of the operation.",
+            required: true,
+          },
+        },
+      },
+      {
+        fn: async (args: Dict<any>) => {
+          await this.bot.editMessageText(args.text, {
+            chat_id: args.chat_id,
+            message_id: args.message_id,
           });
-          return { message_id: message.message_id };
-        }
-        const message = await this.bot.sendMessage(args.chat_id, args.text, {
-          reply_to_message_id: args.reply_to_message_id,
-          reply_markup: args.reply_markup,
-        });
-        return { message_id: message.message_id };
+          return { status: "success" };
+        },
       },
-    });
+    );
 
-    athena.registerTool({
-      name: "telegram/edit-message",
-      desc: "Edit a message in Telegram.",
-      args: {
-        chat_id: {
-          type: "number",
-          desc: "Unique identifier for the target chat or username of the target channel.",
-          required: true,
+    athena.registerTool(
+      {
+        name: "telegram/delete-message",
+        desc: "Delete a message in Telegram.",
+        args: {
+          chat_id: {
+            type: "number",
+            desc: "Unique identifier for the target chat or username of the target channel.",
+            required: true,
+          },
+          message_id: {
+            type: "number",
+            desc: "Unique message identifier inside this chat.",
+            required: true,
+          },
         },
-        message_id: {
-          type: "number",
-          desc: "Unique message identifier inside this chat.",
-          required: true,
-        },
-        text: {
-          type: "string",
-          desc: "New text of the message.",
-          required: true,
-        },
-      },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "Status of the operation.",
-          required: true,
+        retvals: {
+          status: {
+            type: "string",
+            desc: "Status of the operation.",
+            required: true,
+          },
         },
       },
-      fn: async (args: Dict<any>) => {
-        await this.bot.editMessageText(args.text, {
-          chat_id: args.chat_id,
-          message_id: args.message_id,
-        });
-        return { status: "success" };
-      },
-    });
-
-    athena.registerTool({
-      name: "telegram/delete-message",
-      desc: "Delete a message in Telegram.",
-      args: {
-        chat_id: {
-          type: "number",
-          desc: "Unique identifier for the target chat or username of the target channel.",
-          required: true,
-        },
-        message_id: {
-          type: "number",
-          desc: "Unique message identifier inside this chat.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          await this.bot.deleteMessage(args.chat_id, args.message_id);
+          return { status: "success" };
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "Status of the operation.",
-          required: true,
-        },
-      },
-      fn: async (args: Dict<any>) => {
-        await this.bot.deleteMessage(args.chat_id, args.message_id);
-        return { status: "success" };
-      },
-    });
+    );
 
     athena.once("plugins-loaded", () => {
       this.bot.on("message", async (msg) => {

@@ -43,28 +43,32 @@ export default class CLIUI extends PluginBase {
         },
       },
     });
-    athena.registerTool({
-      name: "ui/send-message",
-      desc: "Sends a message to the user.",
-      args: {
-        content: {
-          type: "string",
-          desc: "The message to send to the user. Don't output any Markdown formatting.",
-          required: true,
+    athena.registerTool(
+      {
+        name: "ui/send-message",
+        desc: "Sends a message to the user.",
+        args: {
+          content: {
+            type: "string",
+            desc: "The message to send to the user. Don't output any Markdown formatting.",
+            required: true,
+          },
+        },
+        retvals: {
+          status: {
+            type: "string",
+            desc: "Status of the operation.",
+            required: true,
+          },
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "Status of the operation.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          this.printOutput(`<Athena> ${args.content}\n`);
+          return { status: "success" };
         },
       },
-      fn: async (args: Dict<any>) => {
-        this.printOutput(`<Athena> ${args.content}\n`);
-        return { status: "success" };
-      },
-    });
+    );
     athena.once("plugins-loaded", async () => {
       process.stdin.setRawMode(true);
       process.stdin.on("data", this.boundHandleStdin);

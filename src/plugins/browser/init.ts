@@ -103,412 +103,453 @@ export default class Browser extends PluginBase {
         };
       },
     });
-    athena.registerTool({
-      name: "browser/new-page",
-      desc: "Opens a new page in the browser.",
-      args: {
-        url: { type: "string", desc: "The URL to open.", required: true },
-      },
-      retvals: {
-        index: {
-          type: "number",
-          desc: "The index of the new page.",
-          required: true,
+    athena.registerTool(
+      {
+        name: "browser/new-page",
+        desc: "Opens a new page in the browser.",
+        args: {
+          url: { type: "string", desc: "The URL to open.", required: true },
         },
-        url: {
-          type: "string",
-          desc: "The URL of the new page.",
-          required: true,
-        },
-        title: {
-          type: "string",
-          desc: "The title of the new page.",
-          required: true,
-        },
-        content: {
-          type: "array",
-          desc: "The content of the new page.",
-          required: true,
+        retvals: {
+          index: {
+            type: "number",
+            desc: "The index of the new page.",
+            required: true,
+          },
+          url: {
+            type: "string",
+            desc: "The URL of the new page.",
+            required: true,
+          },
+          title: {
+            type: "string",
+            desc: "The title of the new page.",
+            required: true,
+          },
+          content: {
+            type: "array",
+            desc: "The content of the new page.",
+            required: true,
+          },
         },
       },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Opening ${args.url} in the browser...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `${args.url} is successfully opened at page ${retvals.index}.`,
-          details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content,
-          )}`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          const index = await this.browserUse.newPage(args.url);
-          const metadata = await this.browserUse.getPageMetadata(index);
+      {
+        explain_args: (args: Dict<any>) => {
           return {
-            index,
-            ...metadata,
-            content: await this.browserUse.getPageContent(index),
+            summary: `Opening ${args.url} in the browser...`,
           };
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/close-page",
-      desc: "Closes the page. You must call this tool after you are done with the page to release the resources. This tool won't affect the index of any other pages. You won't be able to access the page after closing it.",
-      args: {
-        index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
         },
-      },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
-        },
-      },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Closing the page at index ${args.index}...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The page at index ${args.index} is closed.`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          await this.browserUse.closePage(args.index);
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
           return {
-            status: "success",
+            summary: `${args.url} is successfully opened at page ${retvals.index}.`,
+            details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
+              retvals.content,
+            )}`,
           };
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/click",
-      desc: "Clicks on an element.",
-      args: {
-        page_index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
         },
-        node_index: {
-          type: "number",
-          desc: "The index of the element to click. If you want to click a checkbox or a radio button in a list, you must click the one before the corresponding text, not after; otherwise, the wrong element will be clicked.",
-          required: true,
+        fn: async (args: Dict<any>) => {
+          return await this.withLock(async () => {
+            const index = await this.browserUse.newPage(args.url);
+            const metadata = await this.browserUse.getPageMetadata(index);
+            return {
+              index,
+              ...metadata,
+              content: await this.browserUse.getPageContent(index),
+            };
+          });
         },
       },
-      retvals: {
-        url: {
-          type: "string",
-          desc: "The URL of the page.",
-          required: true,
+    );
+    athena.registerTool(
+      {
+        name: "browser/close-page",
+        desc: "Closes the page. You must call this tool after you are done with the page to release the resources. This tool won't affect the index of any other pages. You won't be able to access the page after closing it.",
+        args: {
+          index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
         },
-        title: {
-          type: "array",
-          desc: "The content of the page after clicking the element.",
-          required: true,
-        },
-        content: {
-          type: "array",
-          desc: "The content of the page after clicking the element.",
-          required: true,
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
         },
       },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Clicking on the element at page ${args.page_index} and index ${args.node_index}...`,
-        };
+      {
+        explain_args: (args: Dict<any>) => {
+          return {
+            summary: `Closing the page at index ${args.index}...`,
+          };
+        },
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
+          return {
+            summary: `The page at index ${args.index} is closed.`,
+          };
+        },
+        fn: async (args: Dict<any>) => {
+          return await this.withLock(async () => {
+            await this.browserUse.closePage(args.index);
+            return {
+              status: "success",
+            };
+          });
+        },
       },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The element at page ${args.page_index} and index ${args.node_index} is clicked.`,
-          details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content,
-          )}`,
-        };
+    );
+    athena.registerTool(
+      {
+        name: "browser/click",
+        desc: "Clicks on an element.",
+        args: {
+          page_index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
+          node_index: {
+            type: "number",
+            desc: "The index of the element to click. If you want to click a checkbox or a radio button in a list, you must click the one before the corresponding text, not after; otherwise, the wrong element will be clicked.",
+            required: true,
+          },
+        },
+        retvals: {
+          url: {
+            type: "string",
+            desc: "The URL of the page.",
+            required: true,
+          },
+          title: {
+            type: "string",
+            desc: "The content of the page after clicking the element.",
+            required: true,
+          },
+          content: {
+            type: "array",
+            desc: "The content of the page after clicking the element.",
+            required: true,
+          },
+        },
       },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          await this.browserUse.clickElement(args.page_index, args.node_index);
-          const metadata = await this.browserUse.getPageMetadata(
-            args.page_index,
+      {
+        explain_args: (args: Dict<any>) => {
+          return {
+            summary: `Clicking on the element at page ${args.page_index} and index ${args.node_index}...`,
+          };
+        },
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
+          return {
+            summary: `The element at page ${args.page_index} and index ${args.node_index} is clicked.`,
+            details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
+              retvals.content,
+            )}`,
+          };
+        },
+        fn: async (args) => {
+          return await this.withLock(async () => {
+            await this.browserUse.clickElement(
+              args.page_index,
+              args.node_index,
+            );
+            const metadata = await this.browserUse.getPageMetadata(
+              args.page_index,
+            );
+            return {
+              ...metadata,
+              content: await this.browserUse.getPageContent(args.page_index),
+            };
+          });
+        },
+      },
+    );
+    athena.registerTool(
+      {
+        name: "browser/fill",
+        desc: "Fills text into an element.",
+        args: {
+          page_index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
+          node_index: {
+            type: "number",
+            desc: "The index of the element to fill text into.",
+            required: true,
+          },
+          text: {
+            type: "string",
+            desc: "The text to fill into the element.",
+            required: true,
+          },
+        },
+        retvals: {
+          url: {
+            type: "string",
+            desc: "The URL of the page.",
+            required: true,
+          },
+          title: {
+            type: "string",
+            desc: "The content of the page after filling text into the element.",
+            required: true,
+          },
+          content: {
+            type: "array",
+            desc: "The content of the page after filling text into the element.",
+            required: true,
+          },
+        },
+      },
+      {
+        explain_args: (args: Dict<any>) => {
+          return {
+            summary: `Filling ${args.text} into the element at page ${args.page_index} and index ${args.node_index}...`,
+          };
+        },
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
+          return {
+            summary: `The element at page ${args.page_index} and index ${args.node_index} is filled with ${args.text}.`,
+            details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
+              retvals.content,
+            )}`,
+          };
+        },
+        fn: async (args) => {
+          return await this.withLock(
+            async (): Promise<{
+              title: string;
+              url: string;
+              content: any[];
+            }> => {
+              await this.browserUse.fillElement(
+                args.page_index,
+                args.node_index,
+                args.text,
+              );
+              const metadata = await this.browserUse.getPageMetadata(
+                args.page_index,
+              );
+              return {
+                ...metadata,
+                content: await this.browserUse.getPageContent(args.page_index),
+              };
+            },
           );
+        },
+      },
+    );
+    athena.registerTool(
+      {
+        name: "browser/get-content",
+        desc: "Gets the content of the page.",
+        args: {
+          index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
+        },
+        retvals: {
+          url: {
+            type: "string",
+            desc: "The URL of the page.",
+            required: true,
+          },
+          title: {
+            type: "string",
+            desc: "The content of the page.",
+            required: true,
+          },
+          content: {
+            type: "array",
+            desc: "The content of the page.",
+            required: true,
+          },
+        },
+      },
+      {
+        explain_args: (args: Dict<any>) => {
           return {
-            ...metadata,
-            content: await this.browserUse.getPageContent(args.page_index),
+            summary: `Getting the content of the page at index ${args.index}...`,
           };
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/fill",
-      desc: "Fills text into an element.",
-      args: {
-        page_index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
         },
-        node_index: {
-          type: "number",
-          desc: "The index of the element to fill text into.",
-          required: true,
-        },
-        text: {
-          type: "string",
-          desc: "The text to fill into the element.",
-          required: true,
-        },
-      },
-      retvals: {
-        url: {
-          type: "string",
-          desc: "The URL of the page.",
-          required: true,
-        },
-        title: {
-          type: "array",
-          desc: "The content of the page after filling text into the element.",
-          required: true,
-        },
-        content: {
-          type: "array",
-          desc: "The content of the page after filling text into the element.",
-          required: true,
-        },
-      },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Filling ${args.text} into the element at page ${args.page_index} and index ${args.node_index}...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The element at page ${args.page_index} and index ${args.node_index} is filled with ${args.text}.`,
-          details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content,
-          )}`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          await this.browserUse.fillElement(
-            args.page_index,
-            args.node_index,
-            args.text,
-          );
-          const metadata = await this.browserUse.getPageMetadata(
-            args.page_index,
-          );
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
           return {
-            ...metadata,
-            content: await this.browserUse.getPageContent(args.page_index),
+            summary: `The content of the page at index ${args.index} is retrieved.`,
+            details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
+              retvals.content,
+            )}`,
           };
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/get-content",
-      desc: "Gets the content of the page.",
-      args: {
-        index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
+        },
+        fn: async (args) => {
+          return await this.withLock(async () => {
+            const metadata = await this.browserUse.getPageMetadata(args.index);
+            return {
+              ...metadata,
+              content: await this.browserUse.getPageContent(args.index),
+            };
+          });
         },
       },
-      retvals: {
-        url: {
-          type: "string",
-          desc: "The URL of the page.",
-          required: true,
+    );
+    athena.registerTool(
+      {
+        name: "browser/get-element-data",
+        desc: "Gets the tag name and attributes of an element. Use this tool if you need to get the src of an image, the href of a link, or etc.",
+        args: {
+          page_index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
+          node_index: {
+            type: "number",
+            desc: "The index of the element.",
+            required: true,
+          },
         },
-        title: {
-          type: "array",
-          desc: "The content of the page.",
-          required: true,
-        },
-        content: {
-          type: "array",
-          desc: "The content of the page.",
-          required: true,
+        retvals: {
+          tagName: {
+            type: "string",
+            desc: "The tag name of the element.",
+            required: true,
+          },
+          attributes: {
+            type: "object",
+            desc: "The attributes of the element.",
+            required: true,
+          },
         },
       },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Getting the content of the page at index ${args.index}...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The content of the page at index ${args.index} is retrieved.`,
-          details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content,
-          )}`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          const metadata = await this.browserUse.getPageMetadata(args.index);
+      {
+        explain_args: (args: Dict<any>) => {
           return {
-            ...metadata,
-            content: await this.browserUse.getPageContent(args.index),
+            summary: `Getting the tag name and attributes of the element at page ${args.page_index} and index ${args.node_index}...`,
           };
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/get-element-data",
-      desc: "Gets the tag name and attributes of an element. Use this tool if you need to get the src of an image, the href of a link, or etc.",
-      args: {
-        page_index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
         },
-        node_index: {
-          type: "number",
-          desc: "The index of the element.",
-          required: true,
-        },
-      },
-      retvals: {
-        tagName: {
-          type: "string",
-          desc: "The tag name of the element.",
-          required: true,
-        },
-        attributes: {
-          type: "object",
-          desc: "The attributes of the element.",
-          required: true,
-        },
-      },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Getting the tag name and attributes of the element at page ${args.page_index} and index ${args.node_index}...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The tag name and attributes of the element at page ${args.page_index} and index ${args.node_index} are retrieved.`,
-          details: `${retvals.tagName}\n${JSON.stringify(retvals.attributes)}`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          return this.browserUse.getElementData(
-            args.page_index,
-            args.node_index,
-          );
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/screenshot",
-      desc: "Takes a screenshot of the page.",
-      args: {
-        index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
-        },
-        path: {
-          type: "string",
-          desc: "The path to save the screenshot.",
-          required: true,
-        },
-      },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
-        },
-      },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Taking a screenshot of the page at index ${args.index} and saving it to ${args.path}...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The screenshot of the page at index ${args.index} is taken and saved to ${args.path}.`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          await this.browserUse.screenshot(
-            this.browserUse.pages[args.index].page,
-            args.path,
-          );
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
           return {
-            status: "success",
+            summary: `The tag name and attributes of the element at page ${args.page_index} and index ${args.node_index} are retrieved.`,
+            details: `${retvals.tagName}\n${JSON.stringify(retvals.attributes)}`,
           };
-        });
-      },
-    });
-    athena.registerTool({
-      name: "browser/scroll-down",
-      desc: "Scrolls down the page to load more content. If the webpage loads more content when you scroll down and you need to access the new content, you must call this tool to scroll to the bottom of the page.",
-      args: {
-        index: {
-          type: "number",
-          desc: "The index of the page.",
-          required: true,
+        },
+        fn: async (args: Dict<any>) => {
+          return await this.withLock(async () => {
+            return this.browserUse.getElementData(
+              args.page_index,
+              args.node_index,
+            );
+          });
         },
       },
-      retvals: {
-        url: {
-          type: "string",
-          desc: "The URL of the page.",
-          required: true,
+    );
+    athena.registerTool(
+      {
+        name: "browser/screenshot",
+        desc: "Takes a screenshot of the page.",
+        args: {
+          index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
+          path: {
+            type: "string",
+            desc: "The path to save the screenshot.",
+            required: true,
+          },
         },
-        title: {
-          type: "array",
-          desc: "The content of the page after scrolling down.",
-          required: true,
-        },
-        content: {
-          type: "array",
-          desc: "The content of the page after scrolling down.",
-          required: true,
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
         },
       },
-      explain_args: (args: Dict<any>) => {
-        return {
-          summary: `Scrolling down the page at index ${args.index}...`,
-        };
-      },
-      explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
-        return {
-          summary: `The page at index ${args.index} is scrolled down.`,
-          details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content,
-          )}`,
-        };
-      },
-      fn: async (args: Dict<any>) => {
-        return await this.withLock(async () => {
-          await this.browserUse.scrollDown(args.index);
-          const metadata = await this.browserUse.getPageMetadata(args.index);
+      {
+        explain_args: (args: Dict<any>) => {
           return {
-            ...metadata,
-            content: await this.browserUse.getPageContent(args.index),
+            summary: `Taking a screenshot of the page at index ${args.index} and saving it to ${args.path}...`,
           };
-        });
+        },
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
+          return {
+            summary: `The screenshot of the page at index ${args.index} is taken and saved to ${args.path}.`,
+          };
+        },
+        fn: async (args: Dict<any>) => {
+          return await this.withLock(async () => {
+            await this.browserUse.screenshot(
+              this.browserUse.pages[args.index].page,
+              args.path,
+            );
+            return {
+              status: "success",
+            };
+          });
+        },
       },
-    });
+    );
+    athena.registerTool(
+      {
+        name: "browser/scroll-down",
+        desc: "Scrolls down the page to load more content. If the webpage loads more content when you scroll down and you need to access the new content, you must call this tool to scroll to the bottom of the page.",
+        args: {
+          index: {
+            type: "number",
+            desc: "The index of the page.",
+            required: true,
+          },
+        },
+        retvals: {
+          url: {
+            type: "string",
+            desc: "The URL of the page.",
+            required: true,
+          },
+          title: {
+            type: "string",
+            desc: "The content of the page after scrolling down.",
+            required: true,
+          },
+          content: {
+            type: "array",
+            desc: "The content of the page after scrolling down.",
+            required: true,
+          },
+        },
+      },
+      {
+        explain_args: (args: Dict<any>) => {
+          return {
+            summary: `Scrolling down the page at index ${args.index}...`,
+          };
+        },
+        explain_retvals: (args: Dict<any>, retvals: Dict<any>) => {
+          return {
+            summary: `The page at index ${args.index} is scrolled down.`,
+            details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
+              retvals.content,
+            )}`,
+          };
+        },
+        fn: async (args) => {
+          return await this.withLock(async () => {
+            await this.browserUse.scrollDown(args.index);
+            const metadata = await this.browserUse.getPageMetadata(args.index);
+            return {
+              ...metadata,
+              content: await this.browserUse.getPageContent(args.index),
+            };
+          });
+        },
+      },
+    );
     this.browserUse.on("popup", this.boundPopupHandler);
     this.browserUse.on("download-started", this.boundDownloadStartedHandler);
     this.browserUse.on(

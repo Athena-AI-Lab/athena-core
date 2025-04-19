@@ -9,57 +9,61 @@ export default class AthenaPlugin extends PluginBase {
   }
 
   async load(athena: Athena) {
-    athena.registerTool({
-      name: "athena/load-plugin",
-      desc: "Loads a plugin.",
-      args: {
-        name: {
-          type: "string",
-          desc: "The name of the plugin to load.",
-          required: true,
-        },
+    athena.registerTool(
+      {
+        name: "athena/load-plugin",
+        desc: "Loads a plugin.",
         args: {
-          type: "object",
-          desc: "The arguments to pass to the plugin.",
-          required: true,
+          name: {
+            type: "string",
+            desc: "The name of the plugin to load.",
+            required: true,
+          },
+          args: {
+            type: "object",
+            desc: "The arguments to pass to the plugin.",
+            required: true,
+          },
+        },
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
-        },
-      },
-      fn: async (args: Dict<any>) => {
-        if (athena.plugins[args.name]) {
-          await athena.unloadPlugin(args.name);
-        }
-        await new Promise<void>((resolve, reject) => {
-          exec("pnpm fast-build", (error, stdout, stderr) => {
-            if (error) {
-              reject(Error(stdout));
-            } else {
-              resolve();
-            }
-          });
-        });
-        try {
-          await athena.loadPlugin(args.name, args.args);
-          athena.emit("plugins-loaded");
-        } catch (e) {
-          try {
+      {
+        fn: async (args) => {
+          if (athena.plugins[args.name]) {
             await athena.unloadPlugin(args.name);
-          } catch (e) {
-            if (args.name in athena.plugins) {
-              delete athena.plugins[args.name];
-            }
           }
-          throw e;
-        }
-        return { status: "success" };
+          await new Promise<void>((resolve, reject) => {
+            exec("pnpm fast-build", (error, stdout, stderr) => {
+              if (error) {
+                reject(Error(stdout));
+              } else {
+                resolve();
+              }
+            });
+          });
+          try {
+            await athena.loadPlugin(args.name, args.args);
+            athena.emit("plugins-loaded");
+          } catch (e) {
+            try {
+              await athena.unloadPlugin(args.name);
+            } catch (e) {
+              if (args.name in athena.plugins) {
+                delete athena.plugins[args.name];
+              }
+            }
+            throw e;
+          }
+          return { status: "success" };
+        },
       },
-    });
+    );
   }
 
   async unload(athena: Athena) {

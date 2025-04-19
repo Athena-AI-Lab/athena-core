@@ -47,36 +47,40 @@ export default class Cerebrum extends PluginBase {
     this.boundAthenaPrivateEventHandler =
       this.athenaPrivateEventHandler.bind(this);
     if (this.config.image_supported) {
-      athena.registerTool({
-        name: "image/check-out",
-        desc: "Check out an image. Whenever you want to see an image, or the user asks you to see an image, use this tool.",
-        args: {
-          image: {
-            type: "string",
-            desc: "The URL or local path of the image to check out.",
-            required: true,
+      athena.registerTool(
+        {
+          name: "image/check-out",
+          desc: "Check out an image. Whenever you want to see an image, or the user asks you to see an image, use this tool.",
+          args: {
+            image: {
+              type: "string",
+              desc: "The URL or local path of the image to check out.",
+              required: true,
+            },
+          },
+          retvals: {
+            result: {
+              type: "string",
+              desc: "The result of checking out the image.",
+              required: true,
+            },
           },
         },
-        retvals: {
-          result: {
-            type: "string",
-            desc: "The result of checking out the image.",
-            required: true,
+        {
+          fn: async (args) => {
+            let image = args.image;
+            if (!image.startsWith("http")) {
+              image = await image2uri(image);
+            }
+            this.imageUrls.push(image);
+            return { result: "success" };
           },
+          explain_args: (args: Dict<any>) => ({
+            summary: "Checking out the image...",
+            details: args.image,
+          }),
         },
-        fn: async (args: Dict<any>) => {
-          let image = args.image;
-          if (!image.startsWith("http")) {
-            image = await image2uri(image);
-          }
-          this.imageUrls.push(image);
-          return { result: "success" };
-        },
-        explain_args: (args: Dict<any>) => ({
-          summary: "Checking out the image...",
-          details: args.image,
-        }),
-      });
+      );
     }
     athena.on("event", this.boundAthenaEventHandler);
     athena.on("private-event", this.boundAthenaPrivateEventHandler);

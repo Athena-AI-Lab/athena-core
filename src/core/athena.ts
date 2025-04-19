@@ -5,19 +5,72 @@ import logger from "../utils/logger.js";
 
 export type Dict<T> = { [key: string]: T };
 
-export interface IAthenaArgument {
-  type: "string" | "number" | "boolean" | "object" | "array";
+type IAthenaArgumentPrimitive = {
+  type: "string" | "number" | "boolean";
   desc: string;
   required: boolean;
-  of?: Dict<IAthenaArgument> | IAthenaArgument;
-}
+};
 
-export interface IAthenaTool {
+export type IAthenaArgument =
+  | IAthenaArgumentPrimitive
+  | {
+      type: "object" | "array";
+      desc: string;
+      required: boolean;
+      of?: Dict<IAthenaArgument> | IAthenaArgument;
+    };
+type IAthenaArgumentInstance<T extends IAthenaArgument> =
+  T extends IAthenaArgumentPrimitive
+    ? T["type"] extends "string"
+      ? T["required"] extends true
+        ? string
+        : string | undefined
+      : T["type"] extends "number"
+        ? T["required"] extends true
+          ? number
+          : number | undefined
+        : T["type"] extends "boolean"
+          ? T["required"] extends true
+            ? boolean
+            : boolean | undefined
+          : never
+    : T extends { of: Dict<IAthenaArgument> }
+      ? T["required"] extends true
+        ? { [K in keyof T["of"]]: IAthenaArgumentInstance<T["of"][K]> }
+        :
+            | { [K in keyof T["of"]]: IAthenaArgumentInstance<T["of"][K]> }
+            | undefined
+      : T extends { of: IAthenaArgument }
+        ? T["required"] extends true
+          ? IAthenaArgumentInstance<T["of"]>[]
+          : IAthenaArgumentInstance<T["of"]>[] | undefined
+        : T extends { type: "object" }
+          ? T["required"] extends true
+            ? { [K in keyof T["of"]]: any }
+            : { [K in keyof T["of"]]: any } | undefined
+          : T extends { type: "array" }
+            ? T["required"] extends true
+              ? any[]
+              : (any | undefined)[]
+            : never;
+
+export interface IAthenaTool<
+  Args extends Dict<IAthenaArgument> = Dict<IAthenaArgument>,
+  RetArgs extends Dict<IAthenaArgument> = Dict<IAthenaArgument>,
+> {
   name: string;
   desc: string;
-  args: Dict<IAthenaArgument>;
-  retvals: Dict<IAthenaArgument>;
-  fn: (args: Dict<any>) => Promise<Dict<any>>;
+  args: Args;
+  retvals: RetArgs;
+  fn: (args: {
+    [K in keyof Args]: Args[K] extends IAthenaArgument
+      ? IAthenaArgumentInstance<Args[K]>
+      : never;
+  }) => Promise<{
+    [K in keyof RetArgs]: RetArgs[K] extends IAthenaArgument
+      ? IAthenaArgumentInstance<RetArgs[K]>
+      : never;
+  }>;
   explain_args?: (args: Dict<any>) => IAthenaExplanation;
   explain_retvals?: (args: Dict<any>, retvals: Dict<any>) => IAthenaExplanation;
 }
@@ -38,7 +91,7 @@ export class Athena extends EventEmitter {
   config: Dict<any>;
   states: Dict<Dict<any>>;
   plugins: Dict<PluginBase>;
-  tools: Dict<IAthenaTool>;
+  tools: Map<string, IAthenaTool<any, any>>;
   events: Dict<IAthenaEvent>;
 
   constructor(config: Dict<any>, states: Dict<Dict<any>>) {
@@ -46,7 +99,7 @@ export class Athena extends EventEmitter {
     this.config = config;
     this.states = states;
     this.plugins = {};
-    this.tools = {};
+    this.tools = new Map();
     this.events = {};
   }
 
@@ -103,11 +156,31 @@ export class Athena extends EventEmitter {
     logger.warn(`Plugin ${name} is unloaded`);
   }
 
-  registerTool(tool: IAthenaTool) {
+  registerTool<
+    Args extends Dict<IAthenaArgument>,
+    RetArgs extends Dict<IAthenaArgument>,
+    Tool extends IAthenaTool<Args, RetArgs>,
+  >(
+    config: {
+      name: string;
+      desc: string;
+      args: Args;
+      retvals: RetArgs;
+    },
+    toolImpl: {
+      fn: Tool["fn"];
+      explain_args?: Tool["explain_args"];
+      explain_retvals?: Tool["explain_retvals"];
+    },
+  ) {
+    const tool = {
+      ...config,
+      ...toolImpl,
+    };
     if (tool.name in this.tools) {
       throw new Error(`Tool ${tool.name} already registered`);
     }
-    this.tools[tool.name] = tool;
+    this.tools.set(tool.name, tool as unknown as IAthenaTool<any, any>);
     logger.warn(`Tool ${tool.name} is registered`);
   }
 
@@ -115,7 +188,7 @@ export class Athena extends EventEmitter {
     if (!(name in this.tools)) {
       throw new Error(`Tool ${name} not registered`);
     }
-    delete this.tools[name];
+    this.tools.delete(name);
     logger.warn(`Tool ${name} is deregistered`);
   }
 
@@ -159,7 +232,10 @@ export class Athena extends EventEmitter {
     if (!(name in this.tools)) {
       throw new Error(`Tool ${name} not registered`);
     }
-    const tool = this.tools[name];
+    const tool = this.tools.get(name);
+    if (!tool) {
+      throw new Error(`Tool ${name} not found`);
+    }
     if (tool.explain_args) {
       this.emitPrivateEvent("athena/tool-call", tool.explain_args(args));
     }

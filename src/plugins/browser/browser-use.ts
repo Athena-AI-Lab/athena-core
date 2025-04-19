@@ -9,10 +9,10 @@ interface IPageState {
   pageNodes: IPageNode[];
 }
 
-interface IPageMetadata {
+type IBrowserUsePageMetadata = {
   url: string;
   title: string;
-}
+};
 
 interface IElementData {
   tagName: string;
@@ -141,7 +141,7 @@ export class BrowserUse extends EventEmitter {
     await this.waitForLoading(page);
   }
 
-  async getPageMetadata(pageIndex: number): Promise<IPageMetadata> {
+  async getPageMetadata(pageIndex: number): Promise<IBrowserUsePageMetadata> {
     const pageState = this.pages[pageIndex];
     const page = pageState.page;
     return {

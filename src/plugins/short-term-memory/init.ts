@@ -16,83 +16,95 @@ export default class ShortTermMemory extends PluginBase {
   }
 
   async load(athena: Athena) {
-    athena.registerTool({
-      name: "stm/append-tasks",
-      desc: "Append an array of tasks to the short-term memory.",
-      args: {
-        tasks: {
-          type: "array",
-          desc: "The array of tasks to append.",
-          required: true,
-          of: {
+    athena.registerTool(
+      {
+        name: "stm/append-tasks",
+        desc: "Append an array of tasks to the short-term memory.",
+        args: {
+          tasks: {
+            type: "array",
+            desc: "The array of tasks to append.",
+            required: true,
+            of: {
+              type: "string",
+              desc: "The content of the task.",
+              required: true,
+            },
+          },
+        },
+        retvals: {
+          status: {
             type: "string",
-            desc: "The content of the task.",
+            desc: "The status of the operation.",
             required: true,
           },
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          this.tasks.push(
+            ...args.tasks.map((task: string) => ({
+              content: task,
+              finished: false,
+            })),
+          );
+          return { status: "success" };
         },
       },
-      fn: async (args: Dict<any>) => {
-        this.tasks.push(
-          ...args.tasks.map((task: string) => ({
-            content: task,
-            finished: false,
-          })),
-        );
-        return { status: "success" };
-      },
-    });
-    athena.registerTool({
-      name: "stm/mark-task-finished",
-      desc: "Mark tasks as finished.",
-      args: {
-        indices: {
-          type: "array",
-          desc: "The indices of the tasks to mark as finished.",
-          required: true,
-          of: {
-            type: "number",
-            desc: "The index of the task to mark as finished.",
+    );
+    athena.registerTool(
+      {
+        name: "stm/mark-task-finished",
+        desc: "Mark tasks as finished.",
+        args: {
+          indices: {
+            type: "array",
+            desc: "The indices of the tasks to mark as finished.",
+            required: true,
+            of: {
+              type: "number",
+              desc: "The index of the task to mark as finished.",
+              required: true,
+            },
+          },
+        },
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
             required: true,
           },
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          args.indices.forEach((index: number) => {
+            this.tasks[index].finished = true;
+          });
+          return { status: "success" };
         },
       },
-      fn: async (args: Dict<any>) => {
-        args.indices.forEach((index: number) => {
-          this.tasks[index].finished = true;
-        });
-        return { status: "success" };
-      },
-    });
-    athena.registerTool({
-      name: "stm/clear-tasks",
-      desc: "Clear all tasks.",
-      args: {},
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
+    );
+    athena.registerTool(
+      {
+        name: "stm/clear-tasks",
+        desc: "Clear all tasks.",
+        args: {},
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
         },
       },
-      fn: async () => {
-        this.tasks = [];
-        return { status: "success" };
+      {
+        fn: async () => {
+          this.tasks = [];
+          return { status: "success" };
+        },
       },
-    });
+    );
   }
 
   async unload(athena: Athena) {

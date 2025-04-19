@@ -299,187 +299,199 @@ export default class Discord extends PluginBase {
       },
     });
 
-    athena.registerTool({
-      name: "discord/send-message",
-      desc: "Send a message to a chat in Discord.",
-      args: {
-        channel_id: {
-          type: "string",
-          desc: "The ID of the channel to send the message to.",
-          required: true,
-        },
-        reply_to_message_id: {
-          type: "string",
-          desc: "The ID of the message to reply to.",
-          required: false,
-        },
-        content: {
-          type: "string",
-          desc: "The content of the message.",
-          required: true,
-        },
-        files: {
-          type: "array",
-          desc: "The files to attach to the message.",
-          required: false,
-          of: {
-            type: "object",
-            desc: "The file to attach.",
+    athena.registerTool(
+      {
+        name: "discord/send-message",
+        desc: "Send a message to a chat in Discord.",
+        args: {
+          channel_id: {
+            type: "string",
+            desc: "The ID of the channel to send the message to.",
             required: true,
+          },
+          reply_to_message_id: {
+            type: "string",
+            desc: "The ID of the message to reply to.",
+            required: false,
+          },
+          content: {
+            type: "string",
+            desc: "The content of the message.",
+            required: true,
+          },
+          files: {
+            type: "array",
+            desc: "The files to attach to the message.",
+            required: false,
             of: {
-              name: {
-                type: "string",
-                desc: "The name of the file.",
-                required: true,
-              },
-              desc: {
-                type: "string",
-                desc: "The description of the file.",
-                required: false,
-              },
-              path: {
-                type: "string",
-                desc: "The path to the file. Could be local path or URL.",
-                required: true,
+              type: "object",
+              desc: "The file to attach.",
+              required: true,
+              of: {
+                name: {
+                  type: "string",
+                  desc: "The name of the file.",
+                  required: true,
+                },
+                desc: {
+                  type: "string",
+                  desc: "The description of the file.",
+                  required: false,
+                },
+                path: {
+                  type: "string",
+                  desc: "The path to the file. Could be local path or URL.",
+                  required: true,
+                },
               },
             },
           },
+          components: {
+            type: "array",
+            desc: "The components to attach to the message.",
+            required: false,
+            of: {
+              type: "object",
+              desc: "The component to attach to the message.",
+              required: true,
+            },
+          },
         },
-        components: {
-          type: "array",
-          desc: "The components to attach to the message.",
-          required: false,
-          of: {
-            type: "object",
-            desc: "The component to attach to the message.",
+        retvals: {
+          id: {
+            type: "string",
+            desc: "The ID of the message sent.",
             required: true,
           },
         },
       },
-      retvals: {
-        id: {
-          type: "string",
-          desc: "The ID of the message sent.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          const channel = await this.client.channels.fetch(args.channel_id);
+          if (!channel) {
+            throw new Error("The channel does not exist.");
+          }
+          if (!channel.isTextBased()) {
+            throw new Error("The channel is not text-based.");
+          }
+          return {
+            id: (
+              await (channel as SendableChannels).send({
+                content: args.content,
+                reply: args.reply_to_message_id
+                  ? {
+                      messageReference: args.reply_to_message_id,
+                    }
+                  : undefined,
+                files: args.files
+                  ? args.files.map((file: Dict<any>) => ({
+                      attachment: file.path,
+                      name: file.name,
+                      description: file.desc,
+                    }))
+                  : undefined,
+                components: args.components,
+              })
+            ).id,
+          };
         },
       },
-      fn: async (args: Dict<any>) => {
-        const channel = await this.client.channels.fetch(args.channel_id);
-        if (!channel) {
-          throw new Error("The channel does not exist.");
-        }
-        if (!channel.isTextBased()) {
-          throw new Error("The channel is not text-based.");
-        }
-        return {
-          id: (
-            await (channel as SendableChannels).send({
-              content: args.content,
-              reply: args.reply_to_message_id
-                ? {
-                    messageReference: args.reply_to_message_id,
-                  }
-                : undefined,
-              files: args.files
-                ? args.files.map((file: Dict<any>) => ({
-                    attachment: file.path,
-                    name: file.name,
-                    description: file.desc,
-                  }))
-                : undefined,
-              components: args.components,
-            })
-          ).id,
-        };
-      },
-    });
+    );
 
-    athena.registerTool({
-      name: "discord/edit-message",
-      desc: "Edit a message in Discord.",
-      args: {
-        channel_id: {
-          type: "string",
-          desc: "The ID of the channel the message is in.",
-          required: true,
+    athena.registerTool(
+      {
+        name: "discord/edit-message",
+        desc: "Edit a message in Discord.",
+        args: {
+          channel_id: {
+            type: "string",
+            desc: "The ID of the channel the message is in.",
+            required: true,
+          },
+          message_id: {
+            type: "string",
+            desc: "The ID of the message to edit.",
+            required: true,
+          },
+          content: {
+            type: "string",
+            desc: "The new content of the message.",
+            required: true,
+          },
         },
-        message_id: {
-          type: "string",
-          desc: "The ID of the message to edit.",
-          required: true,
-        },
-        content: {
-          type: "string",
-          desc: "The new content of the message.",
-          required: true,
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          const channel = await this.client.channels.fetch(args.channel_id);
+          if (!channel) {
+            throw new Error("The channel does not exist.");
+          }
+          if (!channel.isTextBased()) {
+            throw new Error("The channel is not text-based.");
+          }
+          const message = await (channel as SendableChannels).messages.fetch(
+            args.message_id,
+          );
+          if (!message) {
+            throw new Error("The message does not exist.");
+          }
+          await message.edit(args.content);
+          return { status: "success" };
         },
       },
-      fn: async (args: Dict<any>) => {
-        const channel = await this.client.channels.fetch(args.channel_id);
-        if (!channel) {
-          throw new Error("The channel does not exist.");
-        }
-        if (!channel.isTextBased()) {
-          throw new Error("The channel is not text-based.");
-        }
-        const message = await (channel as SendableChannels).messages.fetch(
-          args.message_id,
-        );
-        if (!message) {
-          throw new Error("The message does not exist.");
-        }
-        await message.edit(args.content);
-        return { status: "success" };
-      },
-    });
+    );
 
-    athena.registerTool({
-      name: "discord/delete-message",
-      desc: "Delete a message in Discord.",
-      args: {
-        channel_id: {
-          type: "string",
-          desc: "The ID of the channel the message is in.",
-          required: true,
+    athena.registerTool(
+      {
+        name: "discord/delete-message",
+        desc: "Delete a message in Discord.",
+        args: {
+          channel_id: {
+            type: "string",
+            desc: "The ID of the channel the message is in.",
+            required: true,
+          },
+          message_id: {
+            type: "string",
+            desc: "The ID of the message to delete.",
+            required: true,
+          },
         },
-        message_id: {
-          type: "string",
-          desc: "The ID of the message to delete.",
-          required: true,
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
         },
       },
-      retvals: {
-        status: {
-          type: "string",
-          desc: "The status of the operation.",
-          required: true,
+      {
+        fn: async (args: Dict<any>) => {
+          const channel = await this.client.channels.fetch(args.channel_id);
+          if (!channel) {
+            throw new Error("The channel does not exist.");
+          }
+          if (!channel.isTextBased()) {
+            throw new Error("The channel is not text-based.");
+          }
+          const message = await (channel as SendableChannels).messages.fetch(
+            args.message_id,
+          );
+          if (!message) {
+            throw new Error("The message does not exist.");
+          }
+          await message.delete();
+          return { status: "success" };
         },
       },
-      fn: async (args: Dict<any>) => {
-        const channel = await this.client.channels.fetch(args.channel_id);
-        if (!channel) {
-          throw new Error("The channel does not exist.");
-        }
-        if (!channel.isTextBased()) {
-          throw new Error("The channel is not text-based.");
-        }
-        const message = await (channel as SendableChannels).messages.fetch(
-          args.message_id,
-        );
-        if (!message) {
-          throw new Error("The message does not exist.");
-        }
-        await message.delete();
-        return { status: "success" };
-      },
-    });
+    );
 
     athena.once("plugins-loaded", () => {
       this.client.on(Events.MessageCreate, async (message) => {
