@@ -27,7 +27,7 @@ export default class LongTermMemory extends PluginBase {
     this.db = new DatabaseSync(this.config.persist_db ? this.config.db_file : ':memory:', {
       allowExtension: true
     });
-    load(this.db as any);
+    load(this.db);
     
     // TODO: Support migration for varying dimensions
     this.db.exec(`
