@@ -37,7 +37,7 @@ export default class Llm extends PluginBase {
         model: {
           type: "string",
           desc: `The model to use. Available models: ${JSON.stringify(
-            this.config.models.chat
+            this.config.models.chat,
           )}`,
           required: true,
         },
@@ -124,7 +124,7 @@ export default class Llm extends PluginBase {
         model: {
           type: "string",
           desc: `The model to use. Available models: ${JSON.stringify(
-            this.config.models.image
+            this.config.models.image,
           )}`,
           required: true,
         },

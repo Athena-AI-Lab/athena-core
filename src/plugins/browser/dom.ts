@@ -73,7 +73,7 @@ const isClickable = (element: Element, dom: JSDOM): boolean => {
   } catch (e) {}
   return (
     element.matches(
-      'a, button, [role="button"], input[type="button"], input[type="submit"], input[type="checkbox"], input[type="radio"], [onclick], label[for]'
+      'a, button, [role="button"], input[type="button"], input[type="submit"], input[type="checkbox"], input[type="radio"], [onclick], label[for]',
     ) || style?.cursor === "pointer"
   );
 };
@@ -81,7 +81,7 @@ const isClickable = (element: Element, dom: JSDOM): boolean => {
 const isFillable = (element: Element): boolean => {
   return (
     element.matches(
-      'input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="search"], input[type="tel"], input[type="url"], textarea, [contenteditable="true"]'
+      'input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="search"], input[type="tel"], input[type="url"], textarea, [contenteditable="true"]',
     ) ||
     (element.tagName.toLowerCase() === "input" &&
       element.getAttribute("type") == null)
@@ -89,7 +89,7 @@ const isFillable = (element: Element): boolean => {
 };
 
 export const parseDom = (
-  dom: JSDOM
+  dom: JSDOM,
 ): { allNodes: IPageNode[]; topLevelNodes: IPageNode[] } => {
   const allNodes: IPageNode[] = [];
 
@@ -190,7 +190,7 @@ export const toExternalNode = (pageNode: IPageNode): IExternalNode => {
 
   const children = pageNode.children.map(toExternalNode);
   const isChildrenAllText = children.every(
-    (child) => typeof child === "string"
+    (child) => typeof child === "string",
   );
 
   return {
@@ -202,7 +202,7 @@ export const toExternalNode = (pageNode: IPageNode): IExternalNode => {
     text:
       isChildrenAllText && children.length > 0
         ? children.join(" ").trim()
-        : pageNode.node.getAttribute("value")?.trim() ?? undefined,
+        : (pageNode.node.getAttribute("value")?.trim() ?? undefined),
     children: isChildrenAllText ? undefined : children,
   };
 };

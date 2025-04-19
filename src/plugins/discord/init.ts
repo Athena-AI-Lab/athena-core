@@ -430,7 +430,7 @@ export default class Discord extends PluginBase {
           throw new Error("The channel is not text-based.");
         }
         const message = await (channel as SendableChannels).messages.fetch(
-          args.message_id
+          args.message_id,
         );
         if (!message) {
           throw new Error("The message does not exist.");
@@ -471,7 +471,7 @@ export default class Discord extends PluginBase {
           throw new Error("The channel is not text-based.");
         }
         const message = await (channel as SendableChannels).messages.fetch(
-          args.message_id
+          args.message_id,
         );
         if (!message) {
           throw new Error("The message does not exist.");
@@ -494,7 +494,7 @@ export default class Discord extends PluginBase {
             message.content.toLowerCase().includes("channel id")
           ) {
             message.channel.send(
-              `You appear to not have access to Athena, but FYI, your channel ID is ${message.channel.id}.`
+              `You appear to not have access to Athena, but FYI, your channel ID is ${message.channel.id}.`,
             );
           }
           return;
@@ -504,7 +504,7 @@ export default class Discord extends PluginBase {
           reply_to_message =
             message.reference && message.reference.messageId
               ? await message.channel.messages.fetch(
-                  message.reference.messageId
+                  message.reference.messageId,
                 )
               : undefined;
         } catch (e) {
@@ -619,7 +619,7 @@ export default class Discord extends PluginBase {
     }
     if (
       ["cerebrum/thinking", "athena/tool-call", "athena/tool-result"].includes(
-        event
+        event,
       )
     ) {
       const message = (() => {

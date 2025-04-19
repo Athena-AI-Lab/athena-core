@@ -301,7 +301,7 @@ export default class Clock extends PluginBase {
     this.timeout = setTimeout(() => {
       const now = Date.now();
       const firedTimeouts = this.timeouts.filter(
-        (t) => t.next_trigger_time <= now
+        (t) => t.next_trigger_time <= now,
       );
       for (const timeout of firedTimeouts) {
         this.athena.emitEvent("clock/timeout-triggered", {

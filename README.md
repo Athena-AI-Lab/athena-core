@@ -11,7 +11,7 @@
   <a href="https://athenalab.ai/"><img src="https://img.shields.io/badge/Website-AthenaLab.AI-blue" alt="Website"></a>
 </div>
 
-**Athena** is a production-ready general AI agent built to *do*, not just *think*. It bridges insight with execution, helping you move from idea to results effortlessly.
+**Athena** is a production-ready general AI agent built to _do_, not just _think_. It bridges insight with execution, helping you move from idea to results effortlessly.
 
 Some examples of what Athena can do:
 
@@ -47,16 +47,19 @@ With all the tools it has, Athena is capable of:
 ## 🚀 Quick Start
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/Athena-AI-Lab/athena-core.git
 ```
 
 2. [Install pnpm](https://pnpm.io/installation) (if not already installed):
+
 ```bash
 npm install -g pnpm
 ```
 
 3. Install project dependencies:
+
 ```bash
 cd athena-core
 pnpm i
@@ -64,6 +67,7 @@ pnpx playwright install
 ```
 
 4. Copy the example config file:
+
 ```bash
 cp configs/config.yaml-example configs/config.yaml
 ```
@@ -99,6 +103,7 @@ plugins:
 > For a complete list of plugins and detailed configuration options, please refer to the [Configuration Guide](docs/configuration.md). See [Cerebrum](docs/configuration.md#cerebrum) section for best practices on selecting the right model for your use case.
 
 6. Launch Athena:
+
 ```bash
 pnpm start
 ```
@@ -117,25 +122,30 @@ Trust us: the AI will probably do a better job explaining it than we ever could.
 
 ## 🗓️ Roadmap
 
-Our mission is to realize **human-level intelligence**, or *AGI*, by evolving Athena into a truly autonomous and capable agent. Here's a more detailed roadmap of what we're working on:
+Our mission is to realize **human-level intelligence**, or _AGI_, by evolving Athena into a truly autonomous and capable agent. Here's a more detailed roadmap of what we're working on:
 
 - [ ] **Autonomous Code Writing**
+
   - Enable Athena to iteratively write and improve its own plugins
 
 - [ ] **Robust Browser Automation**
+
   - Improve reliability and fault tolerance in headless and headful modes
   - Add advanced DOM element parsing and interaction strategies
 
 - [ ] **Context Management Improvements**
+
   - Adjust prompt context windows for different LLMs
   - Implement context summarization for out-of-window context
 
 - [ ] **Long-Term Memory with RAG**
+
   - Set up vector database integration for persistent knowledge
   - Enable memory recall across sessions and tasks
   - Support user-specific long-term context embedding and retrieval
 
 - [ ] **Image and Video Model Expansion**
+
   - Integrate support for more image and video generation models
   - Enable multimodal workflows that combine text, image, and video reasoning
 
@@ -148,7 +158,7 @@ Our mission is to realize **human-level intelligence**, or *AGI*, by evolving At
 
 We welcome contributions from everyone — whether you're fixing a typo, suggesting a feature, or building a whole new plugin!
 
-Athena is a community-driven project, and we believe in building great tools *together*. Here's how you can help:
+Athena is a community-driven project, and we believe in building great tools _together_. Here's how you can help:
 
 ### 💡 Got an Idea?
 
@@ -166,6 +176,7 @@ Open a [GitHub Issue](https://github.com/Athena-AI-Lab/athena-core/issues) and l
 ### 🧪 Suggest Tests or Improvements
 
 Not into code? You can still help by:
+
 - Testing features and reporting issues
 - Improving documentation
 - Sharing Athena with others and providing feedback

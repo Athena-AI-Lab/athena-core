@@ -3,7 +3,7 @@ import fs from "fs";
 
 export const fileDigest = async (
   filePath: string,
-  algorithm: string = "sha256"
+  algorithm: string = "sha256",
 ) => {
   return new Promise<string>((resolve, reject) => {
     const hash = crypto.createHash(algorithm);

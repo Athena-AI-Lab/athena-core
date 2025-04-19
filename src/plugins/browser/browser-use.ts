@@ -107,7 +107,7 @@ export class BrowserUse extends EventEmitter {
         url: pageState.page.url(),
         resources: "usable",
         pretendToBeVisual: true,
-      })
+      }),
     );
     pageState.pageNodes = pageNodes.allNodes;
     return toExternalNodes(pageNodes.topLevelNodes);
@@ -159,7 +159,7 @@ export class BrowserUse extends EventEmitter {
         Array.from((pageNode.node as Element).attributes).map((attr) => [
           attr.name,
           attr.value,
-        ])
+        ]),
       ),
     };
   }

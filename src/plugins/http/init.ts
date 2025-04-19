@@ -237,7 +237,7 @@ export default class Http extends PluginBase {
           request.on("response", (response) => {
             if (response.statusCode !== 200) {
               reject(
-                new Error(`Failed to download file: ${response.statusCode}`)
+                new Error(`Failed to download file: ${response.statusCode}`),
               );
               return;
             }

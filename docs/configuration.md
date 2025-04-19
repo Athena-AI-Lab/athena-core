@@ -29,8 +29,8 @@ Plugins are the core components of Athena. Each plugin has its own configuration
 The `browser` plugin allows Athena to control a web browser via Playwright.
 
 ```yaml
-  browser:
-    headless: true
+browser:
+  headless: true
 ```
 
 - `headless`: Whether to run the browser in headless mode. If set to `true`, the browser will not be visible.
@@ -42,43 +42,43 @@ The `cerebrum` plugin is the main plugin for Athena. It handles event receiving,
 Here is a configuration example for the cerebrum plugin using GPT-4o:
 
 ```yaml
-  cerebrum:
-    base_url: https://api.openai.com/v1
-    api_key: sk-proj-your-openai-api-key
-    model: gpt-4o
-    temperature: 0.5
-    image_supported: true
-    max_prompts: 50
-    max_event_strlen: 65536
-    max_tokens: 16384
+cerebrum:
+  base_url: https://api.openai.com/v1
+  api_key: sk-proj-your-openai-api-key
+  model: gpt-4o
+  temperature: 0.5
+  image_supported: true
+  max_prompts: 50
+  max_event_strlen: 65536
+  max_tokens: 16384
 ```
 
 However, Athena performs best with DeepSeek V3 (not 0324). The web app version of Athena uses DeepSeek V3 as its cerebrum model. Here is an example configuration for DeepSeek V3:
 
 ```yaml
-  cerebrum:
-    base_url: https://openrouter.ai/api/v1
-    api_key: sk-your-openrouter-api-key
-    model: deepseek/deepseek-chat
-    temperature: 0.5
-    image_supported: false
-    max_prompts: 50
-    max_event_strlen: 65536
-    max_tokens: 16384
+cerebrum:
+  base_url: https://openrouter.ai/api/v1
+  api_key: sk-your-openrouter-api-key
+  model: deepseek/deepseek-chat
+  temperature: 0.5
+  image_supported: false
+  max_prompts: 50
+  max_event_strlen: 65536
+  max_tokens: 16384
 ```
 
 Although more expensive, Athena can perform even better with Claude 3.7 Sonnet. Here is an example configuration:
 
 ```yaml
-  cerebrum:
-    base_url: https://api.anthropic.com/v1
-    api_key: sk-ant-api03-your-anthropic-api-key
-    model: claude-3-7-sonnet-latest
-    temperature: 0.5
-    image_supported: false
-    max_prompts: 50
-    max_event_strlen: 65536
-    max_tokens: 16384
+cerebrum:
+  base_url: https://api.anthropic.com/v1
+  api_key: sk-ant-api03-your-anthropic-api-key
+  model: claude-3-7-sonnet-latest
+  temperature: 0.5
+  image_supported: false
+  max_prompts: 50
+  max_event_strlen: 65536
+  max_tokens: 16384
 ```
 
 - `base_url`: The base URL of the API endpoint.
@@ -95,7 +95,7 @@ Although more expensive, Athena can perform even better with Claude 3.7 Sonnet. 
 Enable `cli-ui` to interact with Athena via the command line. If not needed, you can remove it from the `plugins` section.
 
 ```yaml
-  cli-ui:
+cli-ui:
 ```
 
 ### Clock
@@ -103,7 +103,7 @@ Enable `cli-ui` to interact with Athena via the command line. If not needed, you
 The `clock` plugin provides time awareness and scheduling. When enabled, Athena can get the current date and time, and manage timers and alarms.
 
 ```yaml
-  clock:
+clock:
 ```
 
 ### Discord
@@ -111,13 +111,13 @@ The `clock` plugin provides time awareness and scheduling. When enabled, Athena 
 Enable `discord` for Athena to send and receive messages from Discord.
 
 ```yaml
-  discord:
-    bot_token: your-discord-bot-token
-    allowed_channel_ids:
-      - "1234567890"
-      - "9876543210"
-    admin_channel_ids: []
-    log_channel_ids: []
+discord:
+  bot_token: your-discord-bot-token
+  allowed_channel_ids:
+    - "1234567890"
+    - "9876543210"
+  admin_channel_ids: []
+  log_channel_ids: []
 ```
 
 - `bot_token`: The Discord bot token.
@@ -130,7 +130,7 @@ Enable `discord` for Athena to send and receive messages from Discord.
 Enable `file-system` to allow Athena to access your local file system. Athena will be able to read and write files.
 
 ```yaml
-  file-system:
+file-system:
 ```
 
 ### HTTP
@@ -138,13 +138,13 @@ Enable `file-system` to allow Athena to access your local file system. Athena wi
 Enable `http` for Athena to send HTTP requests, search the web via Jina Search or Exa Search, and download files from the Internet.
 
 ```yaml
-  http:
-    jina: # Optional Jina config
-      base_url: https://s.jina.ai
-      api_key: your-jina-api-key
-    exa: # Optional Exa config
-      base_url: https://api.exa.ai # Optional, defaults to this
-      api_key: your-exa-api-key   # Required if using Exa
+http:
+  jina: # Optional Jina config
+    base_url: https://s.jina.ai
+    api_key: your-jina-api-key
+  exa: # Optional Exa config
+    base_url: https://api.exa.ai # Optional, defaults to this
+    api_key: your-exa-api-key # Required if using Exa
 ```
 
 - `jina`: Configuration for [Jina Search](https://jina.ai/). (Optional)
@@ -159,24 +159,24 @@ Enable `http` for Athena to send HTTP requests, search the web via Jina Search o
 Enable `llm` for Athena to chat with other language models and generate images.
 
 Since only a single OpenAI endpoint can be configured currently, it's recommended to use a service like LiteLLM proxy to route requests to different language models. OpenRouter is another option, though it doesn't support image generation.
- 
+
 ```yaml
-  llm:
-    base_url: https://openrouter.ai/api/v1
-    api_key: sk-or-v1-your-openrouter-api-key
-    models:
-      chat:
-        - name: openai/gpt-4o
-          desc: GPT-4o is good at general purpose tasks. Supports image input. Whenever you receive an image and need to understand it, pass it to this model using the image arg.
-        - name: openai/o3-mini
-          desc: O3 Mini is good at deep thinking and planning. Whenever you need to plan something complicated or solve complex math problems, use this model.
-        - name: anthropic/claude-3.7-sonnet
-          desc: Claude 3.7 Sonnet is good at writing code. Whenever you need to write code, use this model.
-        - name: perplexity/sonar
-          desc: Perplexity can access the Internet. Whenever you need to search the Internet, use this model.
-      image:
-        - name: openai/dall-e-3 # OpenRouter doesn't support image generation
-          desc: DALL-E 3 is good at generating images. Whenever you are requested to generate images, use this model.
+llm:
+  base_url: https://openrouter.ai/api/v1
+  api_key: sk-or-v1-your-openrouter-api-key
+  models:
+    chat:
+      - name: openai/gpt-4o
+        desc: GPT-4o is good at general purpose tasks. Supports image input. Whenever you receive an image and need to understand it, pass it to this model using the image arg.
+      - name: openai/o3-mini
+        desc: O3 Mini is good at deep thinking and planning. Whenever you need to plan something complicated or solve complex math problems, use this model.
+      - name: anthropic/claude-3.7-sonnet
+        desc: Claude 3.7 Sonnet is good at writing code. Whenever you need to write code, use this model.
+      - name: perplexity/sonar
+        desc: Perplexity can access the Internet. Whenever you need to search the Internet, use this model.
+    image:
+      - name: openai/dall-e-3 # OpenRouter doesn't support image generation
+        desc: DALL-E 3 is good at generating images. Whenever you are requested to generate images, use this model.
 ```
 
 - `base_url`: The base URL of the API endpoint.
@@ -194,7 +194,7 @@ Since only a single OpenAI endpoint can be configured currently, it's recommende
 Enable `python` for Athena to run inline Python code or Python scripts. This also enables Athena to install pip packages.
 
 ```yaml
-  python:
+python:
 ```
 
 ### Shell
@@ -202,7 +202,7 @@ Enable `python` for Athena to run inline Python code or Python scripts. This als
 Enable `shell` for Athena to run shell commands.
 
 ```yaml
-  shell:
+shell:
 ```
 
 ### Short-Term Memory
@@ -210,7 +210,7 @@ Enable `shell` for Athena to run shell commands.
 Enable `short-term-memory` for Athena to manage a basic task list.
 
 ```yaml
-  short-term-memory:
+short-term-memory:
 ```
 
 ### Telegram
@@ -218,13 +218,13 @@ Enable `short-term-memory` for Athena to manage a basic task list.
 Enable `telegram` for Athena to send and receive messages from Telegram.
 
 ```yaml
-  telegram:
-    bot_token: your-telegram-bot-token
-    allowed_chat_ids:
-      - 1234567890
-      - 9876543210
-    admin_chat_ids: []
-    log_chat_ids: []
+telegram:
+  bot_token: your-telegram-bot-token
+  allowed_chat_ids:
+    - 1234567890
+    - 9876543210
+  admin_chat_ids: []
+  log_chat_ids: []
 ```
 
 - `bot_token`: The Telegram bot token.

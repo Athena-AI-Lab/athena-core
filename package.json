@@ -13,7 +13,9 @@
     "build": "npm run clean && npm run fast-build",
     "fast-build": "swc src -d dist --strip-leading-paths",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
   },
   "repository": {
     "type": "git",
@@ -57,6 +59,7 @@
     "@types/node": "^22.14.1",
     "@types/node-telegram-bot-api": "^0.64.7",
     "@types/ws": "^8.5.14",
+    "prettier": "^3.5.3",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

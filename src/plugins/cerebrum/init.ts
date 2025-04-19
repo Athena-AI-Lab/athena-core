@@ -134,7 +134,7 @@ export default class Cerebrum extends PluginBase {
     }
     this.processEventQueueTimer = setTimeout(
       () => this.processEventQueue(),
-      500
+      500,
     );
   }
 
@@ -148,7 +148,7 @@ export default class Cerebrum extends PluginBase {
     let promptsSnapshot = this.prompts.slice();
     try {
       const events = eventQueueSnapshot.map((event) =>
-        this.eventToPrompt(event)
+        this.eventToPrompt(event),
       );
       this.ensureInitialPrompt(promptsSnapshot);
       promptsSnapshot.push({
@@ -234,7 +234,7 @@ export default class Cerebrum extends PluginBase {
             toolCallId = toolCall.id;
             const result = await this.athena.callTool(
               toolCall.name,
-              toolCall.args
+              toolCall.args,
             );
             this.pushEvent({
               tool_result: true,
@@ -401,7 +401,7 @@ ${descs.join("\n\n")}`;
         Object.entries(args as Dict<any>).map(([key, value]) => [
           key,
           this.sanitizeEventArgs(value),
-        ])
+        ]),
       ) as T;
     }
 

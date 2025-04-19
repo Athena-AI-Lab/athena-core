@@ -167,7 +167,7 @@ export class Athena extends EventEmitter {
     if (tool.explain_retvals) {
       this.emitPrivateEvent(
         "athena/tool-result",
-        tool.explain_retvals(args, retvals)
+        tool.explain_retvals(args, retvals),
       );
     }
     return retvals;

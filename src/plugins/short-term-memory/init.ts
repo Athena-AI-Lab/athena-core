@@ -11,7 +11,7 @@ export default class ShortTermMemory extends PluginBase {
 
   desc() {
     return `You have a short-term memory. You must use it to keep track of your tasks while you are working on them. When you receive a task from the user and it requires multiple steps to complete, you must think thoroughly about the steps and break them down into smaller tasks. Try to be as detailed as possible and include all necessary information and append these tasks to your short-term memory. Afterwards, you must follow the task list and work on your unfinished tasks, unless the user asks you to do something else. After you have completed a task or multiple tasks at once, you must mark them as finished. After you have finished all tasks, you must clear your short-term memory. Your current short-term memory is: ${JSON.stringify(
-      this.tasks
+      this.tasks,
     )}. If the results of a task to show to the user is textual and long, you should create a Markdown file and append to it gradually as you complete the task. At the end, you should prepare your response according to this file.`;
   }
 
@@ -43,7 +43,7 @@ export default class ShortTermMemory extends PluginBase {
           ...args.tasks.map((task: string) => ({
             content: task,
             finished: false,
-          }))
+          })),
         );
         return { status: "success" };
       },

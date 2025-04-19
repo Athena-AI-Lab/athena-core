@@ -8,7 +8,7 @@ const logger = createLogger({
         format.colorize(),
         format.printf((info) => {
           return `[${info.timestamp}] [${info.level}] ${info.message}`;
-        })
+        }),
       ),
     }),
   ],

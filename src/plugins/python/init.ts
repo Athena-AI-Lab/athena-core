@@ -66,7 +66,7 @@ export default class Python extends PluginBase {
       fn: async (args: Dict<any>) => {
         return {
           stdout: (await PythonShell.run(args.path, { args: args.args })).join(
-            "\n"
+            "\n",
           ),
         };
       },
@@ -106,7 +106,7 @@ export default class Python extends PluginBase {
               } else {
                 resolve({ result: "success" });
               }
-            }
+            },
           );
         });
       },

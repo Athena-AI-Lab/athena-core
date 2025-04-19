@@ -19,11 +19,14 @@ export default class LongTermMemory extends PluginBase {
   }
 
   async load(athena: Athena) {
-    this.db = new DatabaseSync(this.config.persist_db ? this.config.db_file : ':memory:', {
-      allowExtension: true
-    });
+    this.db = new DatabaseSync(
+      this.config.persist_db ? this.config.db_file : ":memory:",
+      {
+        allowExtension: true,
+      },
+    );
     load(this.db);
-    
+
     // TODO: Support migration for varying dimensions
     this.db.exec(`
       CREATE VIRTUAL TABLE IF NOT EXISTS vec_items USING 
@@ -35,9 +38,9 @@ export default class LongTermMemory extends PluginBase {
     `);
 
     const insertStmt = this.db.prepare(
-      'INSERT INTO vec_items(embedding, desc, data) VALUES (?, ?, ?)'
+      "INSERT INTO vec_items(embedding, desc, data) VALUES (?, ?, ?)",
     );
-    
+
     this.openai = new OpenAI({
       baseURL: this.config.base_url,
       apiKey: this.config.api_key,
@@ -73,9 +76,11 @@ export default class LongTermMemory extends PluginBase {
           input: args.desc,
           encoding_format: "float",
         });
-        insertStmt.run(Float32Array.from(embedding.data[0].embedding), 
-                       args.desc, 
-                       JSON.stringify(args.data));
+        insertStmt.run(
+          Float32Array.from(embedding.data[0].embedding),
+          args.desc,
+          JSON.stringify(args.data),
+        );
         return { status: "success" };
       },
     });
@@ -149,21 +154,23 @@ export default class LongTermMemory extends PluginBase {
           input: args.query,
           encoding_format: "float",
         });
-        const results = this.db.prepare(
-          `SELECT 
+        const results = this.db
+          .prepare(
+            `SELECT 
             distance,
             desc, 
             data
           FROM vec_items 
           WHERE embedding MATCH ?
           ORDER BY distance 
-          LIMIT ${this.config.max_query_results}`
-        ).all(Float32Array.from(embedding.data[0].embedding));
+          LIMIT ${this.config.max_query_results}`,
+          )
+          .all(Float32Array.from(embedding.data[0].embedding));
         if (!results || results.length === 0) {
           throw new Error("No results found");
         }
-        return results.map(result => {
-          if (!result || typeof result !== 'object') {
+        return results.map((result) => {
+          if (!result || typeof result !== "object") {
             throw new Error("Invalid result format");
           }
           return {

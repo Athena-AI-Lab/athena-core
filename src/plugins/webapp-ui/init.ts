@@ -30,7 +30,7 @@ export default class WebappUI extends PluginBase {
     this.athena = athena;
     this.supabase = createClient(
       this.config.supabase.url,
-      this.config.supabase.anon_key
+      this.config.supabase.anon_key,
     );
     this.supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
@@ -53,7 +53,7 @@ export default class WebappUI extends PluginBase {
     }
     this.logTransport = new WebappUITransport(
       this.supabase,
-      this.config.context_id
+      this.config.context_id,
     );
     logger.add(this.logTransport);
     const { data, error: error2 } = await this.supabase
@@ -65,7 +65,7 @@ export default class WebappUI extends PluginBase {
     } else if (data && data[0].states !== null) {
       this.athena.states = data[0].states;
       this.logger.info(
-        `Loaded context states: ${JSON.stringify(data[0].states)}`
+        `Loaded context states: ${JSON.stringify(data[0].states)}`,
       );
     }
     this.boundAthenaPrivateEventHandler =
@@ -154,7 +154,7 @@ export default class WebappUI extends PluginBase {
           for (const file of args.files) {
             if (
               file.location.startsWith(
-                "https://oaidalleapiprodscus.blob.core.windows.net"
+                "https://oaidalleapiprodscus.blob.core.windows.net",
               )
             ) {
               // This is an image from DALL-E. Download it and upload it to Supabase to avoid expiration.
@@ -170,10 +170,10 @@ export default class WebappUI extends PluginBase {
             const digest = await fileDigest(file.location);
             const storagePath = `${this.userId}/${digest.slice(
               0,
-              2
+              2,
             )}/${digest.slice(2, 12)}/${encodeURIComponent(file.name).replace(
               /%/g,
-              "_"
+              "_",
             )}`;
             const contentType = mime.lookup(file.location);
             const { error } = await this.supabase.storage
@@ -187,7 +187,7 @@ export default class WebappUI extends PluginBase {
               });
             if (error) {
               throw new Error(
-                `Error uploading file ${file.name}: ${error.message}`
+                `Error uploading file ${file.name}: ${error.message}`,
               );
             }
             file.location = this.supabase.storage
@@ -372,7 +372,7 @@ export default class WebappUI extends PluginBase {
               resolve();
             }
           });
-        })
+        }),
       );
     }
     await Promise.all(promises);

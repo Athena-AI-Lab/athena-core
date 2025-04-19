@@ -56,7 +56,7 @@ export default class Browser extends PluginBase {
         return {
           summary: `A new page is popped up at index ${args.index} from index ${args.from_index}.`,
           details: `${args.url}\n${args.title}\n${JSON.stringify(
-            args.content
+            args.content,
           )}`,
         };
       },
@@ -140,7 +140,7 @@ export default class Browser extends PluginBase {
         return {
           summary: `${args.url} is successfully opened at page ${retvals.index}.`,
           details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content
+            retvals.content,
           )}`,
         };
       },
@@ -233,7 +233,7 @@ export default class Browser extends PluginBase {
         return {
           summary: `The element at page ${args.page_index} and index ${args.node_index} is clicked.`,
           details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content
+            retvals.content,
           )}`,
         };
       },
@@ -241,7 +241,7 @@ export default class Browser extends PluginBase {
         return await this.withLock(async () => {
           await this.browserUse.clickElement(args.page_index, args.node_index);
           const metadata = await this.browserUse.getPageMetadata(
-            args.page_index
+            args.page_index,
           );
           return {
             ...metadata,
@@ -296,7 +296,7 @@ export default class Browser extends PluginBase {
         return {
           summary: `The element at page ${args.page_index} and index ${args.node_index} is filled with ${args.text}.`,
           details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content
+            retvals.content,
           )}`,
         };
       },
@@ -305,10 +305,10 @@ export default class Browser extends PluginBase {
           await this.browserUse.fillElement(
             args.page_index,
             args.node_index,
-            args.text
+            args.text,
           );
           const metadata = await this.browserUse.getPageMetadata(
-            args.page_index
+            args.page_index,
           );
           return {
             ...metadata,
@@ -353,7 +353,7 @@ export default class Browser extends PluginBase {
         return {
           summary: `The content of the page at index ${args.index} is retrieved.`,
           details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content
+            retvals.content,
           )}`,
         };
       },
@@ -409,7 +409,7 @@ export default class Browser extends PluginBase {
         return await this.withLock(async () => {
           return this.browserUse.getElementData(
             args.page_index,
-            args.node_index
+            args.node_index,
           );
         });
       },
@@ -450,7 +450,7 @@ export default class Browser extends PluginBase {
         return await this.withLock(async () => {
           await this.browserUse.screenshot(
             this.browserUse.pages[args.index].page,
-            args.path
+            args.path,
           );
           return {
             status: "success",
@@ -494,7 +494,7 @@ export default class Browser extends PluginBase {
         return {
           summary: `The page at index ${args.index} is scrolled down.`,
           details: `${retvals.url}\n${retvals.title}\n${JSON.stringify(
-            retvals.content
+            retvals.content,
           )}`,
         };
       },
@@ -513,7 +513,7 @@ export default class Browser extends PluginBase {
     this.browserUse.on("download-started", this.boundDownloadStartedHandler);
     this.browserUse.on(
       "download-completed",
-      this.boundDownloadCompletedHandler
+      this.boundDownloadCompletedHandler,
     );
   }
 
@@ -544,7 +544,7 @@ export default class Browser extends PluginBase {
   async withLock<T>(fn: () => Promise<T>): Promise<T> {
     if (this.lock) {
       throw new Error(
-        "Browser is locked. Please wait for the previous call to complete before making a new call."
+        "Browser is locked. Please wait for the previous call to complete before making a new call.",
       );
     }
     this.lock = true;

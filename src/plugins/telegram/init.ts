@@ -539,7 +539,7 @@ export default class Telegram extends PluginBase {
           ) {
             this.bot.sendMessage(
               chatId,
-              `You appear to not have access to Athena, but FYI, your chat ID is ${chatId}.`
+              `You appear to not have access to Athena, but FYI, your chat ID is ${chatId}.`,
             );
           }
           return;
@@ -628,7 +628,7 @@ export default class Telegram extends PluginBase {
                       file_name: msg.reply_to_message.document.file_name,
                       file_size: msg.reply_to_message.document.file_size,
                       url: await this.getFileUrl(
-                        msg.reply_to_message.document.file_id
+                        msg.reply_to_message.document.file_id,
                       ),
                     }
                   : undefined,
@@ -699,7 +699,7 @@ export default class Telegram extends PluginBase {
     }
     if (
       ["cerebrum/thinking", "athena/tool-call", "athena/tool-result"].includes(
-        event
+        event,
       )
     ) {
       const message = (() => {

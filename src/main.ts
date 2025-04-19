@@ -24,7 +24,7 @@ const main = async () => {
       new transports.File({
         filename: config.log_file,
         format: format.combine(format.timestamp(), format.json()),
-      })
+      }),
     );
     logger.info(`Log file: ${config.log_file}`);
   } else {
