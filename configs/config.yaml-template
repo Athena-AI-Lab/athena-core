@@ -51,6 +51,13 @@ plugins:
   file-system:
   python:
   long-term-memory:
+    base_url: https://api.openai.com/v1
+    api_key: sk-proj-your-openai-api-key
+    vector_model: text-embedding-3-small
+    dimensions: 100
+    max_query_results: 3
+    persist_db: true
+    db_file: configs/long-term-memory.db
   discord:
     bot_token: your-discord-bot-token
     allowed_channel_ids:
