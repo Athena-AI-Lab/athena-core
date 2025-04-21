@@ -91,7 +91,7 @@ export class Athena extends EventEmitter {
   config: Dict<any>;
   states: Dict<Dict<any>>;
   plugins: Dict<PluginBase>;
-  tools: Map<string, IAthenaTool<any, any>>;
+  tools: Dict<IAthenaTool<any, any>>;
   events: Dict<IAthenaEvent>;
 
   constructor(config: Dict<any>, states: Dict<Dict<any>>) {
@@ -99,7 +99,7 @@ export class Athena extends EventEmitter {
     this.config = config;
     this.states = states;
     this.plugins = {};
-    this.tools = new Map();
+    this.tools = {};
     this.events = {};
   }
 
@@ -180,7 +180,7 @@ export class Athena extends EventEmitter {
     if (tool.name in this.tools) {
       throw new Error(`Tool ${tool.name} already registered`);
     }
-    this.tools.set(tool.name, tool as unknown as IAthenaTool<any, any>);
+    this.tools[tool.name] = tool as unknown as IAthenaTool<any, any>;
     logger.warn(`Tool ${tool.name} is registered`);
   }
 
@@ -188,7 +188,7 @@ export class Athena extends EventEmitter {
     if (!(name in this.tools)) {
       throw new Error(`Tool ${name} not registered`);
     }
-    this.tools.delete(name);
+    delete this.tools[name];
     logger.warn(`Tool ${name} is deregistered`);
   }
 
@@ -232,7 +232,7 @@ export class Athena extends EventEmitter {
     if (!(name in this.tools)) {
       throw new Error(`Tool ${name} not registered`);
     }
-    const tool = this.tools.get(name);
+    const tool = this.tools[name];
     if (!tool) {
       throw new Error(`Tool ${name} not found`);
     }
