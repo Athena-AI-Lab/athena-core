@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx watch --include ./src src/main.ts configs/config.yaml",
     "start": "npm run build && npm run fast-start",
-    "fast-start": "node dist/main.js configs/config.yaml",
+    "fast-start": "node --experimental-sqlite dist/main.js configs/config.yaml",
     "build": "npm run clean && npm run fast-build",
     "fast-build": "swc src -d dist --strip-leading-paths",
     "clean": "rm -rf dist",
