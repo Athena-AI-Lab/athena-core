@@ -135,7 +135,7 @@ file-system:
 
 ### HTTP
 
-Enable `http` for Athena to send HTTP requests, search the web via Jina Search or Exa Search, and download files from the Internet.
+Enable `http` for Athena to send HTTP requests, search the web via Jina Search, Exa Search, or Tavily Search, and download files from the Internet.
 
 ```yaml
 http:
@@ -145,6 +145,9 @@ http:
   exa: # Optional Exa config
     base_url: https://api.exa.ai # Optional, defaults to this
     api_key: your-exa-api-key # Required if using Exa
+  tavily: # Optional Tavily config
+    base_url: https://api.tavily.com # Optional, defaults to this
+    api_key: your-tavily-api-key # Required if using Tavily
 ```
 
 - `jina`: Configuration for [Jina Search](https://jina.ai/). (Optional)
@@ -153,6 +156,9 @@ http:
 - `exa`: Configuration for [Exa Search](https://exa.ai/). (Optional)
   - `base_url`: The base URL of the Exa Search API endpoint. (Optional, defaults to `https://api.exa.ai`)
   - `api_key`: The API key for the Exa Search API endpoint. (Required if using Exa)
+- `tavily`: Configuration for [Tavily Search](https://tavily.com/). (Optional)
+  - `base_url`: The base URL of the Tavily Search API endpoint. (Optional, defaults to `https://api.tavily.com`)
+  - `api_key`: The API key for the Tavily Search API endpoint. (Required if using Tavily)
 
 ### LLM
 

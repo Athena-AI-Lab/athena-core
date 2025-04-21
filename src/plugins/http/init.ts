@@ -7,6 +7,7 @@ import { convert } from "html-to-text";
 import { Athena, Dict } from "../../core/athena.js";
 import { JinaSearch } from "./jina.js";
 import { ExaSearch } from "./exa.js";
+import { TavilySearch } from "./tavily.js";
 import { PluginBase } from "../plugin-base.js";
 
 export default class Http extends PluginBase {
@@ -22,6 +23,7 @@ export default class Http extends PluginBase {
 
   jina!: JinaSearch;
   exa!: ExaSearch;
+  tavily!: TavilySearch;
   boundAthenaPrivateEventHandler!: (name: string, args: Dict<any>) => void;
 
   async load(athena: Athena) {
@@ -35,6 +37,12 @@ export default class Http extends PluginBase {
       this.exa = new ExaSearch({
         baseUrl: this.config.exa.base_url,
         apiKey: this.config.exa.api_key,
+      });
+    }
+    if (this.config.tavily) {
+      this.tavily = new TavilySearch({
+        baseUrl: this.config.tavily.base_url,
+        apiKey: this.config.tavily.api_key,
       });
     }
     this.boundAthenaPrivateEventHandler =
@@ -214,6 +222,63 @@ export default class Http extends PluginBase {
         },
       );
     }
+    if (this.config.tavily) {
+      athena.registerTool(
+        {
+          name: "http/tavily-search",
+          desc: "Searches the web for information using Tavily API.",
+          args: {
+            query: {
+              type: "string",
+              desc: "The query to search for.",
+              required: true,
+            },
+          },
+          retvals: {
+            results: {
+              type: "array",
+              desc: "The results of the search.",
+              required: true,
+              of: {
+                type: "object",
+                desc: "A single search result.",
+                of: {
+                  title: {
+                    type: "string",
+                    desc: "The title of the result.",
+                    required: true,
+                  },
+                  url: {
+                    type: "string",
+                    desc: "The URL of the result.",
+                    required: true,
+                  },
+                  content: {
+                    type: "string",
+                    desc: "Text content snippet.",
+                    required: true,
+                  },
+                },
+                required: true,
+              },
+            },
+          },
+        },
+        {
+          fn: async (args: Dict<any>) => {
+            const results = await this.tavily.search(args.query);
+            return { results };
+          },
+          explain_args: (args: Dict<any>) => ({
+            summary: `Searching the web with Tavily for ${args.query}...`,
+          }),
+          explain_retvals: (args: Dict<any>, retvals: Dict<any>) => ({
+            summary: `Found ${retvals.results.length} results with Tavily for ${args.query}.`,
+            details: JSON.stringify(retvals.results),
+          }),
+        },
+      );
+    }
     athena.registerTool(
       {
         name: "http/download-file",
@@ -289,6 +354,9 @@ export default class Http extends PluginBase {
     if (this.config.exa) {
       athena.deregisterTool("http/exa-search");
     }
+    if (this.config.tavily) {
+      athena.deregisterTool("http/tavily-search");
+    }
     athena.deregisterTool("http/download-file");
   }
 
@@ -304,6 +372,12 @@ export default class Http extends PluginBase {
         this.exa = new ExaSearch({
           baseUrl: this.config.exa.base_url,
           apiKey: this.config.exa.api_key || args.token,
+        });
+      }
+      if (this.config.tavily) {
+        this.tavily = new TavilySearch({
+          baseUrl: this.config.tavily.base_url,
+          apiKey: args.token,
         });
       }
     }
