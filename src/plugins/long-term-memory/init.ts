@@ -76,7 +76,7 @@ export default class LongTermMemory extends PluginBase {
           const embedding = await this.openai.embeddings.create({
             model: this.config.vector_model,
             dimensions: this.config.dimensions,
-            input: args.desc,
+            input: args.desc + JSON.stringify(args.new_data),
             encoding_format: "float",
           });
           insertStmt.run(
@@ -88,6 +88,60 @@ export default class LongTermMemory extends PluginBase {
         },
       },
     );
+
+    athena.registerTool(
+      {
+        name: "ltm/update",
+        desc: "Update existing data in your long-term memory.",
+        args: {
+          desc: {
+            type: "string",
+            desc: "The description of the data.",
+            required: true,
+          },
+          new_data: {
+            type: "object",
+            desc: "The new data to update the existing data with.",
+            required: true,
+          },
+        },
+        retvals: {
+          status: {
+            type: "string",
+            desc: "The status of the operation.",
+            required: true,
+          },
+        },
+      },
+      {
+        fn: async (args: Dict<any>) => {
+          const existingItem = this.db
+            .prepare("SELECT * FROM vec_items WHERE desc = ?")
+            .get(args.desc);
+          if (!existingItem) {
+            throw new Error("Item not found");
+          }
+          this.db
+            .prepare("DELETE FROM vec_items WHERE desc = ?")
+            .run(args.desc);
+
+          const new_embedding = await this.openai.embeddings.create({
+            model: this.config.vector_model,
+            dimensions: this.config.dimensions,
+            input: args.desc + JSON.stringify(args.new_data),
+            encoding_format: "float",
+          });
+
+          insertStmt.run(
+            Float32Array.from(new_embedding.data[0].embedding),
+            args.desc,
+            JSON.stringify(args.new_data),
+          );
+          return { status: "success" };
+        },
+      },
+    );
+
     // TODO: Implement remove
     athena.registerTool(
       {
@@ -205,6 +259,7 @@ export default class LongTermMemory extends PluginBase {
 
   async unload(athena: Athena) {
     athena.deregisterTool("ltm/store");
+    athena.deregisterTool("ltm/update");
     athena.deregisterTool("ltm/list");
     athena.deregisterTool("ltm/retrieve");
   }
