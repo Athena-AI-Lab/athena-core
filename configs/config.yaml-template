@@ -56,8 +56,7 @@ plugins:
     vector_model: text-embedding-3-small
     dimensions: 100
     max_query_results: 3
-    persist_db: true
-    db_file: configs/long-term-memory.db
+    persist_db: false
   discord:
     bot_token: your-discord-bot-token
     allowed_channel_ids:
