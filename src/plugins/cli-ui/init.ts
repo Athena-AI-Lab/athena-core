@@ -1,19 +1,21 @@
-import readline from "readline";
-
+import { render } from 'ink';
+import React from 'react';
 import { Athena, Dict } from "../../core/athena.js";
 import { PluginBase } from "../plugin-base.js";
+import { App } from './components/App.js';
+
+interface Message {
+  type: 'user' | 'athena' | 'thinking' | 'tool-call' | 'tool-result' | 'event';
+  content: string;
+  timestamp: string;
+}
 
 export default class CLIUI extends PluginBase {
   athena!: Athena;
-  boundHandleStdin!: (key: any) => void;
   boundAthenaPrivateEventHandler!: (event: string, args: Dict<any>) => void;
-  rl: readline.Interface = readline.createInterface({
-    input: process.stdin,
-    terminal: true,
-  });
+  messages: Message[] = [];
+  isThinking: boolean = false;
   prompt: string = "<User> ";
-  currentInput: string = "";
-  currentPos: number = 0;
 
   desc() {
     return "You can interact with the user using UI tools and events. When the user asks you to do something, think about what information and/or details you need to do that. If you need something only the user can provide, you need to ask the user for that information. Ask the users about task details if the request is vague. Be proactive and update the user on your progress, milestones, and obstacles and how you are going to overcome them.";
@@ -21,9 +23,7 @@ export default class CLIUI extends PluginBase {
 
   async load(athena: Athena) {
     this.athena = athena;
-    this.boundAthenaPrivateEventHandler =
-      this.athenaPrivateEventHandler.bind(this);
-    this.boundHandleStdin = this.handleStdin.bind(this);
+    this.boundAthenaPrivateEventHandler = this.athenaPrivateEventHandler.bind(this);
 
     athena.on("private-event", this.boundAthenaPrivateEventHandler);
 
@@ -43,6 +43,7 @@ export default class CLIUI extends PluginBase {
         },
       },
     });
+
     athena.registerTool(
       {
         name: "ui/send-message",
@@ -64,24 +65,19 @@ export default class CLIUI extends PluginBase {
       },
       {
         fn: async (args: Dict<any>) => {
-          this.printOutput(`<Athena> ${args.content}\n`);
+          this.addMessage('athena', args.content);
           return { status: "success" };
         },
       },
     );
+
     athena.once("plugins-loaded", async () => {
-      process.stdin.setRawMode(true);
-      process.stdin.on("data", this.boundHandleStdin);
-      this.printOutput("Welcome to Athena!\n");
-      this.redrawPrompt();
+      this.addMessage('athena', "Welcome to Athena!");
+      this.renderUI();
     });
   }
 
   async unload(athena: Athena) {
-    process.stdin.setRawMode(false);
-    process.stdin.off("data", this.boundHandleStdin);
-    this.rl.close();
-    process.stdin.destroy();
     athena.off("private-event", this.boundAthenaPrivateEventHandler);
     athena.deregisterTool("ui/send-message");
     athena.deregisterEvent("ui/message-received");
@@ -89,99 +85,45 @@ export default class CLIUI extends PluginBase {
 
   athenaPrivateEventHandler(event: string, args: Dict<any>) {
     if (event === "cerebrum/thinking") {
-      this.printOutput(`<Thinking> ${args.content}\n`);
+      this.addMessage('thinking', args.content);
     } else if (event === "athena/tool-call") {
-      this.printOutput(`<Tool Call> ${args.summary}\n`);
+      this.addMessage('tool-call', args.summary);
     } else if (event === "athena/tool-result") {
-      this.printOutput(`<Tool Result> ${args.summary}\n`);
+      this.addMessage('tool-result', args.summary);
     } else if (event === "athena/event") {
-      this.printOutput(`<Event> ${args.summary}\n`);
+      this.addMessage('event', args.summary);
     } else if (event === "cerebrum/busy") {
-      this.changePrompt(args.busy ? "<Thinking> " : "<User> ");
+      this.isThinking = args.busy;
+      this.prompt = args.busy ? "<Thinking> " : "<User> ";
+      this.renderUI();
     }
   }
 
-  clearLine() {
-    readline.clearLine(process.stdout, 0);
-    readline.cursorTo(process.stdout, 0);
+  addMessage(type: Message['type'], content: string) {
+    this.messages.push({
+      type,
+      content,
+      timestamp: new Date().toISOString(),
+    });
+    this.renderUI();
   }
 
-  redrawPrompt() {
-    this.clearLine();
-    process.stdout.write(this.prompt);
-    process.stdout.write(this.currentInput);
-    readline.cursorTo(process.stdout, this.prompt.length + this.currentPos);
+  handleMessage(content: string) {
+    this.addMessage('user', content);
+    this.athena.emitEvent("ui/message-received", {
+      content,
+      time: new Date().toISOString(),
+    });
   }
 
-  printOutput(output: string) {
-    this.clearLine();
-    console.log(output);
-    this.redrawPrompt();
-  }
-
-  changePrompt(prompt: string) {
-    this.prompt = prompt;
-    this.redrawPrompt();
-  }
-
-  handleStdin(key: any) {
-    // Ctrl+C
-    if (key.toString() === "\u0003") {
-      process.kill(process.pid, "SIGINT");
-      return;
-    }
-
-    // Enter key
-    if (key.toString() === "\r" || key.toString() === "\n") {
-      this.athena.emitEvent("ui/message-received", {
-        content: this.currentInput,
-        time: new Date().toISOString(),
-      });
-      this.currentInput = "";
-      this.currentPos = 0;
-      console.log("\n");
-      this.redrawPrompt();
-      return;
-    }
-
-    // Backspace
-    if (key.toString() === "\u0008" || key.toString() === "\u007f") {
-      if (this.currentPos > 0) {
-        this.currentInput =
-          this.currentInput.slice(0, this.currentPos - 1) +
-          this.currentInput.slice(this.currentPos);
-        this.currentPos--;
-        this.redrawPrompt();
-      }
-      return;
-    }
-
-    // Left arrow
-    if (key.toString() === "\u001b[D") {
-      if (this.currentPos > 0) {
-        this.currentPos--;
-        this.redrawPrompt();
-      }
-      return;
-    }
-
-    // Right arrow
-    if (key.toString() === "\u001b[C") {
-      if (this.currentPos < this.currentInput.length) {
-        this.currentPos++;
-        this.redrawPrompt();
-      }
-      return;
-    }
-
-    // Regular character input
-    if (key.toString().charCodeAt(0) >= 32 || key.toString().length > 1) {
-      this.currentInput =
-        this.currentInput.slice(0, this.currentPos) +
-        key.toString() +
-        this.currentInput.slice(this.currentPos);
-      this.currentPos += key.toString().length;
-      this.redrawPrompt();
-    }
+  renderUI() {
+    render(
+      React.createElement(App, {
+        onMessage: this.handleMessage.bind(this),
+        messages: this.messages,
+        prompt: this.prompt,
+        isThinking: this.isThinking,
+      })
+    );
   }
 }

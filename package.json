@@ -7,7 +7,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx watch --include ./src src/main.ts configs/config.yaml",
+    "dev": "tsx src/main.ts configs/config.yaml",
     "start": "npm run build && npm run fast-start",
     "fast-start": "node dist/main.js configs/config.yaml",
     "build": "npm run clean && npm run fast-build",
@@ -30,11 +30,13 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "@types/react": "^19.1.4",
     "amadeus": "^11.0.0",
     "discord.js": "^14.18.0",
     "follow-redirects": "^1.15.9",
     "html-to-text": "^9.0.5",
     "image2uri": "^2.1.2",
+    "ink": "^5.2.1",
     "istextorbinary": "^9.5.0",
     "jsdom": "^26.1.0",
     "jsonrepair": "^3.12.0",
@@ -43,6 +45,7 @@
     "openai": "^4.95.1",
     "playwright": "^1.52.0",
     "python-shell": "^5.0.0",
+    "react": "18.3.1",
     "sqlite-vec": "0.1.7-alpha.2",
     "winston": "^3.17.0",
     "winston-transport": "^4.9.0",
