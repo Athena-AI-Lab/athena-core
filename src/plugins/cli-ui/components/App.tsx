@@ -76,8 +76,8 @@ export const App: React.FC<AppProps> = ({
 
   return (
     <Box flexDirection="column">
-      {messages.map((message, index) => (
-        <Box key={index} marginBottom={1}>
+      {messages.map((message) => (
+        <Box key={message.timestamp} marginBottom={1}>
           <Text>
             {message.type === "user" && "<User> "}
             {message.type === "athena" && "<Athena> "}
