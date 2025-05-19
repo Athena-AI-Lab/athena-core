@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput, useApp, Key } from "ink";
 import { Dict } from "../../../core/athena.js";
 
-interface Message {
+export interface Message {
   type: "user" | "athena" | "thinking" | "tool-call" | "tool-result" | "event";
   content: string;
   timestamp: string;

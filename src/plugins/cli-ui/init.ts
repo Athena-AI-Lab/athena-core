@@ -2,13 +2,7 @@ import { render } from "ink";
 import React from "react";
 import { Athena, Dict } from "../../core/athena.js";
 import { PluginBase } from "../plugin-base.js";
-import { App } from "./components/App.js";
-
-interface Message {
-  type: "user" | "athena" | "thinking" | "tool-call" | "tool-result" | "event";
-  content: string;
-  timestamp: string;
-}
+import { App, type Message } from "./components/App.js";
 
 export default class CLIUI extends PluginBase {
   athena!: Athena;
