@@ -30,7 +30,7 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
-    "@types/react": "^19.1.4",
+    "@types/react": "^18.3.21",
     "amadeus": "^11.0.0",
     "discord.js": "^14.18.0",
     "follow-redirects": "^1.15.9",
