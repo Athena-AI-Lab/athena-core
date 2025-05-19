@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput, useApp, Key } from 'ink';
-import { Dict } from '../../../core/athena.js';
+import React, { useState } from "react";
+import { Box, Text, useInput, useApp, Key } from "ink";
+import { Dict } from "../../../core/athena.js";
 
 interface Message {
-  type: 'user' | 'athena' | 'thinking' | 'tool-call' | 'tool-result' | 'event';
+  type: "user" | "athena" | "thinking" | "tool-call" | "tool-result" | "event";
   content: string;
   timestamp: string;
 }
@@ -15,14 +15,19 @@ interface AppProps {
   isThinking: boolean;
 }
 
-export const App: React.FC<AppProps> = ({ onMessage, messages, prompt, isThinking }) => {
-  const [input, setInput] = useState('');
+export const App: React.FC<AppProps> = ({
+  onMessage,
+  messages,
+  prompt,
+  isThinking,
+}) => {
+  const [input, setInput] = useState("");
   const [cursorPosition, setCursorPosition] = useState(0);
   const { exit } = useApp();
 
   useInput((char: string, key: Key) => {
     // Handle Ctrl+C
-    if (key.ctrl && char === 'c') {
+    if (key.ctrl && char === "c") {
       exit();
       return;
     }
@@ -32,7 +37,7 @@ export const App: React.FC<AppProps> = ({ onMessage, messages, prompt, isThinkin
       if (input.trim()) {
         onMessage(input);
       }
-      setInput('');
+      setInput("");
       setCursorPosition(0);
       return;
     }
@@ -40,7 +45,8 @@ export const App: React.FC<AppProps> = ({ onMessage, messages, prompt, isThinkin
     // Handle Backspace
     if (key.backspace || key.delete) {
       if (cursorPosition > 0) {
-        const newInput = input.slice(0, cursorPosition - 1) + input.slice(cursorPosition);
+        const newInput =
+          input.slice(0, cursorPosition - 1) + input.slice(cursorPosition);
         setInput(newInput);
         setCursorPosition(cursorPosition - 1);
       }
@@ -61,7 +67,8 @@ export const App: React.FC<AppProps> = ({ onMessage, messages, prompt, isThinkin
 
     // Handle regular character input
     if (char && char.length === 1) {
-      const newInput = input.slice(0, cursorPosition) + char + input.slice(cursorPosition);
+      const newInput =
+        input.slice(0, cursorPosition) + char + input.slice(cursorPosition);
       setInput(newInput);
       setCursorPosition(cursorPosition + 1);
     }
@@ -72,12 +79,12 @@ export const App: React.FC<AppProps> = ({ onMessage, messages, prompt, isThinkin
       {messages.map((message, index) => (
         <Box key={index} marginBottom={1}>
           <Text>
-            {message.type === 'user' && '<User> '}
-            {message.type === 'athena' && '<Athena> '}
-            {message.type === 'thinking' && '<Thinking> '}
-            {message.type === 'tool-call' && '<Tool Call> '}
-            {message.type === 'tool-result' && '<Tool Result> '}
-            {message.type === 'event' && '<Event> '}
+            {message.type === "user" && "<User> "}
+            {message.type === "athena" && "<Athena> "}
+            {message.type === "thinking" && "<Thinking> "}
+            {message.type === "tool-call" && "<Tool Call> "}
+            {message.type === "tool-result" && "<Tool Result> "}
+            {message.type === "event" && "<Event> "}
             {message.content}
           </Text>
         </Box>
@@ -92,4 +99,4 @@ export const App: React.FC<AppProps> = ({ onMessage, messages, prompt, isThinkin
       </Box>
     </Box>
   );
-}; 
+};

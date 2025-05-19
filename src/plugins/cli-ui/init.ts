@@ -1,11 +1,11 @@
-import { render } from 'ink';
-import React from 'react';
+import { render } from "ink";
+import React from "react";
 import { Athena, Dict } from "../../core/athena.js";
 import { PluginBase } from "../plugin-base.js";
-import { App } from './components/App.js';
+import { App } from "./components/App.js";
 
 interface Message {
-  type: 'user' | 'athena' | 'thinking' | 'tool-call' | 'tool-result' | 'event';
+  type: "user" | "athena" | "thinking" | "tool-call" | "tool-result" | "event";
   content: string;
   timestamp: string;
 }
@@ -23,7 +23,8 @@ export default class CLIUI extends PluginBase {
 
   async load(athena: Athena) {
     this.athena = athena;
-    this.boundAthenaPrivateEventHandler = this.athenaPrivateEventHandler.bind(this);
+    this.boundAthenaPrivateEventHandler =
+      this.athenaPrivateEventHandler.bind(this);
 
     athena.on("private-event", this.boundAthenaPrivateEventHandler);
 
@@ -65,14 +66,14 @@ export default class CLIUI extends PluginBase {
       },
       {
         fn: async (args: Dict<any>) => {
-          this.addMessage('athena', args.content);
+          this.addMessage("athena", args.content);
           return { status: "success" };
         },
       },
     );
 
     athena.once("plugins-loaded", async () => {
-      this.addMessage('athena', "Welcome to Athena!");
+      this.addMessage("athena", "Welcome to Athena!");
       this.renderUI();
     });
   }
@@ -85,13 +86,13 @@ export default class CLIUI extends PluginBase {
 
   athenaPrivateEventHandler(event: string, args: Dict<any>) {
     if (event === "cerebrum/thinking") {
-      this.addMessage('thinking', args.content);
+      this.addMessage("thinking", args.content);
     } else if (event === "athena/tool-call") {
-      this.addMessage('tool-call', args.summary);
+      this.addMessage("tool-call", args.summary);
     } else if (event === "athena/tool-result") {
-      this.addMessage('tool-result', args.summary);
+      this.addMessage("tool-result", args.summary);
     } else if (event === "athena/event") {
-      this.addMessage('event', args.summary);
+      this.addMessage("event", args.summary);
     } else if (event === "cerebrum/busy") {
       this.isThinking = args.busy;
       this.prompt = args.busy ? "<Thinking> " : "<User> ";
@@ -99,7 +100,7 @@ export default class CLIUI extends PluginBase {
     }
   }
 
-  addMessage(type: Message['type'], content: string) {
+  addMessage(type: Message["type"], content: string) {
     this.messages.push({
       type,
       content,
@@ -109,7 +110,7 @@ export default class CLIUI extends PluginBase {
   }
 
   handleMessage(content: string) {
-    this.addMessage('user', content);
+    this.addMessage("user", content);
     this.athena.emitEvent("ui/message-received", {
       content,
       time: new Date().toISOString(),
@@ -123,7 +124,7 @@ export default class CLIUI extends PluginBase {
         messages: this.messages,
         prompt: this.prompt,
         isThinking: this.isThinking,
-      })
+      }),
     );
   }
 }
