@@ -11,9 +11,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.49.4
         version: 2.49.4
-      '@types/react':
-        specifier: ^18.3.21
-        version: 18.3.21
       amadeus:
         specifier: ^11.0.0
         version: 11.0.0
@@ -99,6 +96,9 @@ importers:
       '@types/node-telegram-bot-api':
         specifier: ^0.64.8
         version: 0.64.8
+      '@types/react':
+        specifier: ^18.3.21
+        version: 18.3.21
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1

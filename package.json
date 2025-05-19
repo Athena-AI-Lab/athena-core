@@ -30,7 +30,6 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
-    "@types/react": "^18.3.21",
     "amadeus": "^11.0.0",
     "discord.js": "^14.18.0",
     "follow-redirects": "^1.15.9",
@@ -61,6 +60,7 @@
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.14.1",
     "@types/node-telegram-bot-api": "^0.64.8",
+    "@types/react": "^18.3.21",
     "@types/ws": "^8.18.1",
     "prettier": "^3.5.3",
     "tsx": "^4.19.3",
