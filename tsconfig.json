@@ -10,7 +10,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "jsx": "react-jsx",
-    "lib": ["ES2020", "DOM"],
+    "lib": ["ESNext"],
     "types": ["node"]
   },
   "include": ["src/**/*"],
