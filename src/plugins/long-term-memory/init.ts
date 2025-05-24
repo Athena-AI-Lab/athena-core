@@ -47,19 +47,52 @@ export default class LongTermMemory extends PluginBase {
       defaultHeaders: openaiDefaultHeaders,
     });
 
+    athena.registerTool({
+      name: "ltm/store",
+      desc: "Store some data to your long-term memory.",
+      args: {
+        desc: {
+          type: "string",
+          desc: "A description of the data.",
+          required: true,
+        },
+        data: {
+          type: "object",
+          desc: "The data to store.",
+          required: true,
+        },
+      },
+      {
+        fn: async (args: Dict<any>) => {
+          const embedding = await this.openai.embeddings.create({
+            model: this.config.vector_model,
+            dimensions: this.config.dimensions,
+            input: args.desc + JSON.stringify(args.new_data),
+            encoding_format: "float",
+          });
+          insertStmt.run(
+            Float32Array.from(embedding.data[0].embedding),
+            args.desc,
+            JSON.stringify(args.data),
+          );
+          return { status: "success" };
+        },
+      },
+    );
+
     athena.registerTool(
       {
-        name: "ltm/store",
-        desc: "Store some data to your long-term memory.",
+        name: "ltm/update",
+        desc: "Update existing data in your long-term memory.",
         args: {
           desc: {
             type: "string",
-            desc: "A description of the data.",
+            desc: "The description of the data.",
             required: true,
           },
-          data: {
+          new_data: {
             type: "object",
-            desc: "The data to store.",
+            desc: "The new data to update the existing data with.",
             required: true,
           },
         },
@@ -73,21 +106,33 @@ export default class LongTermMemory extends PluginBase {
       },
       {
         fn: async (args: Dict<any>) => {
-          const embedding = await this.openai.embeddings.create({
+          const existingItem = this.db
+            .prepare("SELECT * FROM vec_items WHERE desc = ?")
+            .get(args.desc);
+          if (!existingItem) {
+            throw new Error("Item not found");
+          }
+          this.db
+            .prepare("DELETE FROM vec_items WHERE desc = ?")
+            .run(args.desc);
+
+          const new_embedding = await this.openai.embeddings.create({
             model: this.config.vector_model,
             dimensions: this.config.dimensions,
-            input: args.desc,
+            input: args.desc + JSON.stringify(args.new_data),
             encoding_format: "float",
           });
+
           insertStmt.run(
-            Float32Array.from(embedding.data[0].embedding),
+            Float32Array.from(new_embedding.data[0].embedding),
             args.desc,
-            JSON.stringify(args.data),
+            JSON.stringify(args.new_data),
           );
           return { status: "success" };
         },
       },
     );
+
     // TODO: Implement remove
     athena.registerTool(
       {
@@ -100,81 +145,64 @@ export default class LongTermMemory extends PluginBase {
             desc: "The list of metadata of the long-term memory.",
             required: true,
             of: {
-              type: "object",
-              desc: "The metadata of the long-term memory.",
-              required: false,
-              of: {
-                desc: {
-                  type: "string",
-                  desc: "The description of the data.",
-                  required: true,
-                },
+              desc: {
+                type: "string",
+                desc: "The description of the data.",
+                required: true,
               },
             },
           },
         },
       },
-      {
-        fn: async (args: Dict<any>) => {
-          const list = this.db
-            .prepare("SELECT desc, data FROM vec_items")
-            .all();
-          return {
-            list: list.map((item) => ({
-              desc: String(item.desc),
-              data: JSON.parse(String(item.data)),
-            })),
-          };
+      fn: async (args: Dict<any>) => {
+        const list = this.db.prepare("SELECT desc, data FROM vec_items").all();
+        return { list: list };
+      },
+    });
+    athena.registerTool({
+      name: "ltm/retrieve",
+      desc: "Retrieve data from your long-term memory.",
+      args: {
+        query: {
+          type: "string",
+          desc: "The query to retrieve the data.",
+          required: true,
         },
       },
-    );
-    athena.registerTool(
-      {
-        name: "ltm/retrieve",
-        desc: "Retrieve data from your long-term memory.",
-        args: {
-          query: {
-            type: "string",
-            desc: "The query to retrieve the data.",
-            required: true,
-          },
-        },
-        retvals: {
-          list: {
-            type: "array",
-            desc: "Query results list of metadata of the long-term memory.",
-            required: true,
+      retvals: {
+        list: {
+          type: "array",
+          desc: "Query results list of metadata of the long-term memory.",
+          required: true,
+          of: {
+            type: "object",
+            desc: "The desc and data of the long-term memory.",
+            required: false,
             of: {
-              type: "object",
-              desc: "The desc and data of the long-term memory.",
-              required: false,
-              of: {
-                desc: {
-                  type: "string",
-                  desc: "The description of the data.",
-                  required: true,
-                },
-                data: {
-                  type: "object",
-                  desc: "The data.",
-                  required: true,
-                },
+              desc: {
+                type: "string",
+                desc: "The description of the data.",
+                required: true,
+              },
+              data: {
+                type: "object",
+                desc: "The data.",
+                required: true,
               },
             },
           },
         },
       },
-      {
-        fn: async (args) => {
-          const embedding = await this.openai.embeddings.create({
-            model: this.config.vector_model,
-            dimensions: this.config.dimensions,
-            input: args.query,
-            encoding_format: "float",
-          });
-          const results = this.db
-            .prepare(
-              `SELECT 
+      fn: async (args: Dict<any>) => {
+        const embedding = await this.openai.embeddings.create({
+          model: this.config.vector_model,
+          dimensions: this.config.dimensions,
+          input: args.query,
+          encoding_format: "float",
+        });
+        const results = this.db
+          .prepare(
+            `SELECT 
             distance,
             desc, 
             data
@@ -205,6 +233,7 @@ export default class LongTermMemory extends PluginBase {
 
   async unload(athena: Athena) {
     athena.deregisterTool("ltm/store");
+    athena.deregisterTool("ltm/update");
     athena.deregisterTool("ltm/list");
     athena.deregisterTool("ltm/retrieve");
   }
