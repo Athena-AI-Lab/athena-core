@@ -1,4 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
@@ -17,6 +18,11 @@ interface IMCPStreamableHttpConfig {
   url: string;
 }
 
+interface IMCPSSEConfig {
+  type: "sse";
+  url: string;
+}
+
 interface IMCPUnknownConfig {
   type: "unknown";
 }
@@ -24,6 +30,7 @@ interface IMCPUnknownConfig {
 type IMCPConfig =
   | IMCPStdioConfig
   | IMCPStreamableHttpConfig
+  | IMCPSSEConfig
   | IMCPUnknownConfig;
 
 export default class MCP extends PluginBase {
@@ -49,7 +56,10 @@ export default class MCP extends PluginBase {
   }
 
   async connectToServer(name: string, config: IMCPConfig, athena: Athena) {
-    let transport: StdioClientTransport | StreamableHTTPClientTransport;
+    let transport:
+      | StdioClientTransport
+      | StreamableHTTPClientTransport
+      | SSEClientTransport;
     if (config.type === "stdio") {
       transport = new StdioClientTransport({
         command: config.command,
@@ -58,6 +68,8 @@ export default class MCP extends PluginBase {
       });
     } else if (config.type === "streamable_http") {
       transport = new StreamableHTTPClientTransport(new URL(config.url));
+    } else if (config.type === "sse") {
+      transport = new SSEClientTransport(new URL(config.url));
     } else {
       throw new Error(`Unknown MCP config type: ${config.type}`);
     }

@@ -87,3 +87,6 @@ plugins:
       server2:
         type: streamable_http
         url: http://localhost:3000
+      server3:
+        type: sse
+        url: http://localhost:3000/sse
