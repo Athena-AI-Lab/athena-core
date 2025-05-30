@@ -1,41 +1,31 @@
-import Bolt, { type App as BoltApp, LogLevel } from "@slack/bolt";
+import bolt from "@slack/bolt";
 import { AuthTestResponse } from "@slack/web-api";
+
 import { Athena, Dict } from "../../core/athena.js";
 import { PluginBase } from "../plugin-base.js";
 
-const { App } = Bolt;
+const { App } = bolt;
 
 export default class Slack extends PluginBase {
-  app!: BoltApp;
+  app!: InstanceType<typeof App>;
   me!: AuthTestResponse;
-  boundAthenaPrivateEventHandler!: (event: string, args: Dict<any>) => void;
 
   desc() {
-    return `You can send and receive messages to and from Slack. Your username in Slack is ${this.me.user_id}. For channels, you don't have to respond to every message - only respond when asked to do something or when you have something useful to contribute. For direct messages, respond to every message unless explicitly told not to. When you receive a message, you can reply by calling the "slack/send-message" tool. Be mindful of the channel or conversation context before sending a message.`;
+    return `You can send and receive messages to and from Slack. The workspace name is ${this.me.team}. Your user ID in Slack is ${this.me.user_id} and your display name is ${this.me.user}. For channels, you don't have to respond to every message. Just respond when you are asked to do something or have something useful to say. For direct messages, you should respond to every message, unless being explicitly told not to. When you receive a message, you can reply to it by calling the "slack/send-message" tool. Be mindful about which channel you are in and the type of the message before sending a message.`;
   }
 
   async load(athena: Athena) {
-    this.boundAthenaPrivateEventHandler =
-      this.athenaPrivateEventHandler.bind(this);
-
     this.app = new App({
       token: this.config.bot_token,
-      appToken: this.config.app_token,
+      signingSecret: this.config.signing_secret,
       socketMode: true,
-      logLevel: LogLevel.DEBUG,
+      appToken: this.config.app_token,
     });
-
     this.me = await this.app.client.auth.test();
 
-    athena.on("private-event", this.boundAthenaPrivateEventHandler);
-    athena.emitPrivateEvent("slack/load", {
-      content: "Plugin slack loaded with Socket Mode.",
-    });
-
-    // Register events
     athena.registerEvent({
       name: "slack/message-received",
-      desc: "Triggered when a message is received from Slack via Socket Mode.",
+      desc: "Triggered when a message is received from Slack.",
       args: {
         ts: {
           type: "string",
@@ -102,7 +92,6 @@ export default class Slack extends PluginBase {
       },
     });
 
-    // Register tools
     athena.registerTool(
       {
         name: "slack/send-message",
@@ -128,7 +117,7 @@ export default class Slack extends PluginBase {
           ts: {
             type: "string",
             desc: "Timestamp of the sent message.",
-            required: false,
+            required: true,
           },
         },
       },
@@ -139,7 +128,7 @@ export default class Slack extends PluginBase {
             text: args.text,
             thread_ts: args.thread_ts,
           });
-          return { ts: result.ts };
+          return { ts: result.ts! };
         },
       },
     );
@@ -220,85 +209,49 @@ export default class Slack extends PluginBase {
       },
     );
 
-    this.app.message(async ({ message, say }) => {
-      console.log("Received message:", message);
-      if (message.subtype) {
-        return;
-      }
-      if (!this.config.allowed_channel_ids.includes(message.channel)) {
-        if (
-          message.channel_type === "im" ||
-          message.text?.toLowerCase().includes("channel id")
-        ) {
-          await say(
-            `You appear to not have access to Athena, but FYI, your channel ID is ${message.channel}.`,
-          );
+    athena.once("plugins-loaded", () => {
+      this.app.message(async ({ message, say }) => {
+        if (message.subtype) {
+          return;
         }
-        return;
-      }
+        if (!this.config.allowed_channel_ids.includes(message.channel)) {
+          if (
+            message.channel_type === "im" ||
+            message.text?.toLowerCase().includes("channel id")
+          ) {
+            await say(
+              `You appear to not have access to Athena, but FYI, your channel ID is ${message.channel}.`,
+            );
+          }
+          return;
+        }
 
-      athena.emitEvent("slack/message-received", {
-        ts: message.ts,
-        user: message.user,
-        channel: message.channel,
-        channel_type: message.channel_type,
-        text: message.text,
-        thread_ts: message.thread_ts,
-        files:
-          message.files?.map((file) => ({
-            id: file.id,
-            name: file.name,
-            url_private: file.url_private,
-            size: file.size,
-          })) ?? [],
+        athena.emitEvent("slack/message-received", {
+          ts: message.ts,
+          user: message.user,
+          channel: message.channel,
+          channel_type: message.channel_type,
+          text: message.text,
+          thread_ts: message.thread_ts,
+          files:
+            message.files?.map((file) => ({
+              id: file.id,
+              name: file.name,
+              url_private: file.url_private,
+              size: file.size,
+            })) ?? [],
+        });
       });
     });
 
-    this.app.start(3000).then(() => {
-      console.log("⚡️ Slack Bolt app is running!");
-    });
+    await this.app.start();
   }
 
   async unload(athena: Athena) {
-    athena.emitPrivateEvent("slack/unload", {
-      content: "Plugin slack unloaded.",
-    });
-    athena.off("private-event", this.boundAthenaPrivateEventHandler);
     await this.app.stop();
     athena.deregisterTool("slack/send-message");
     athena.deregisterTool("slack/edit-message");
     athena.deregisterTool("slack/delete-message");
     athena.deregisterEvent("slack/message-received");
-  }
-
-  athenaPrivateEventHandler(event: string, args: Dict<any>) {
-    if (args.content) {
-      for (const channelId of this.config.admin_channel_ids) {
-        this.app.client.chat
-          .postMessage({
-            channel: channelId,
-            text: `${event}\n${args.content}`,
-          })
-          .catch(() => {});
-      }
-    }
-    if (
-      ["cerebrum/thinking", "athena/tool-call", "athena/tool-result"].includes(
-        event,
-      )
-    ) {
-      const message =
-        event === "cerebrum/thinking"
-          ? `Thinking: ${args.content}`
-          : args.summary;
-      for (const channelId of this.config.log_channel_ids) {
-        this.app.client.chat
-          .postMessage({
-            channel: channelId,
-            text: message,
-          })
-          .catch(() => {});
-      }
-    }
   }
 }

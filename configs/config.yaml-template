@@ -75,3 +75,10 @@ plugins:
   browser:
     headless: true
   cli-ui:
+  slack:
+    bot_token: your-slack-bot-token
+    signing_secret: your-slack-signing-secret
+    app_token: your-slack-app-token
+    allowed_channel_ids:
+      - "1234567890"
+      - "9876543210"
