@@ -29,6 +29,7 @@
   "homepage": "https://athenalab.ai/",
   "description": "",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
     "@supabase/supabase-js": "^2.49.4",
     "amadeus": "^11.0.0",
     "discord.js": "^14.18.0",

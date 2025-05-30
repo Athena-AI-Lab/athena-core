@@ -75,3 +75,18 @@ plugins:
   browser:
     headless: true
   cli-ui:
+  mcp:
+    servers:
+      server1:
+        type: stdio
+        command: node
+        args: ["/path/to/your/mcp-server.js", "arg1", "arg2"]
+        env:
+          ENV_VAR: ENV_VALUE
+          ANOTHER_ENV_VAR: ANOTHER_ENV_VALUE
+      server2:
+        type: streamable_http
+        url: http://localhost:3000
+      server3:
+        type: sse
+        url: http://localhost:3000/sse
