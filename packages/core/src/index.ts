@@ -1,12 +1,18 @@
 import {
-  createWorkflow, workflowEvent
+  createWorkflow,
+  Workflow,
+  WorkflowEvent,
+  workflowEvent,
+  eventSource,
+  WorkflowContext
 } from '@llama-flow/core'
 import {
   pluginRegisterEvent,
   pluginStateAsyncContext,
   Plugin,
   PluginState,
-  pluginUnregisterEvent
+  pluginUnregisterEvent,
+  AthenaTool
 } from './plugin.js'
 
 export type AthenaConfig = {
@@ -23,13 +29,14 @@ const haltEvent = workflowEvent()
 
 export function createAthena (): AthenaConfig {
   const coreWorkflow = createWorkflow()
+  const toolsMap = new Map()
   const pluginSet = new Set<Plugin>()
   const pluginStateMap = new WeakMap<Plugin, PluginState>()
-  const { sendEvent, stream } = coreWorkflow.createContext()
+  let sendEvent: WorkflowContext['sendEvent']
   // one trick to keep the latest stream
-  let latest = stream
+  let latest: WorkflowContext['stream']
 
-  async function waitFn (handler: (s: typeof stream) => Promise<unknown>) {
+  async function waitFn (handler: (s: WorkflowContext['stream']) => Promise<unknown>) {
     const [l, r] = latest.tee()
     await handler(l)
     latest = r
@@ -39,7 +46,8 @@ export function createAthena (): AthenaConfig {
     pluginSet.values().every((plugin) => {
       const pluginState = pluginStateMap.get(plugin)!
       const cleanup = pluginStateAsyncContext.run(pluginState,
-        () => plugin.setup())
+        () => plugin.setup({})
+      )
       if (cleanup) {
         pluginState.cleanup = cleanup
       }
@@ -58,13 +66,32 @@ export function createAthena (): AthenaConfig {
   })
 
   const config: AthenaConfig = {
-    add: (plugin: Plugin) => {
+    add: (plugin) => {
       pluginSet.add(plugin)
       const pluginState: PluginState = {
-        description: '',
-        tools: new Map(),
-        get context() {
+        get name() {
+          return plugin.name
+        },
+        epoch: 0,
+        description: null,
+        get config () {
+          // todo: read from yaml file
+          return {}
+        },
+        get tools () {
+          return toolsMap
+        },
+        get athenaContext () {
           return {
+            get stream() {
+              const [l, r] = latest.tee()
+              latest = r
+              return l.filter(
+                ev =>
+                  eventSource(ev) !== pluginRegisterEvent &&
+                  eventSource(ev) !== pluginUnregisterEvent
+              );
+            },
             sendEvent,
             handle: coreWorkflow.handle,
             wait: waitFn
@@ -75,8 +102,12 @@ export function createAthena (): AthenaConfig {
       return config
     },
     run: () => {
+      ({ sendEvent, stream: latest } = coreWorkflow.createContext())
       sendEvent(pluginRegisterEvent.with())
       return {
+        get tools (): ReadonlyMap<string, AthenaTool> {
+          return toolsMap
+        },
         get plugins (): ReadonlySet<Plugin> {
           return new Set(pluginSet)
         },

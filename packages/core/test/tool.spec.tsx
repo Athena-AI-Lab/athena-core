@@ -2,16 +2,15 @@ import { expect, test } from 'vitest'
 import {
   useTool,
   onEvent,
-  Plugin,
   useDescription,
   sendEvent,
-  defineEvent
+  defineEvent, definePlugin
 } from '../src/plugin.js'
 import { createAthena } from '../src/index.js'
 
 test('should able to add tool to plugin', async () => {
   const messageSentEvent = defineEvent<string>()
-  const examplePlugin: Plugin = {
+  const examplePlugin = definePlugin({
     name: 'example',
     setup () {
       useDescription('this plugin does nothing')
@@ -36,7 +35,7 @@ test('should able to add tool to plugin', async () => {
         expect(data).toBe('example result')
       })
     }
-  }
+  })
   const athena = createAthena().add(examplePlugin).run()
   await athena.stop()
 })

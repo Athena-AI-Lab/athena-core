@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vitest'
 import { createAthena } from '../src/index.js'
 import {
-  Plugin,
+  definePlugin,
   useDescription
 } from '../src/plugin.js'
 
@@ -11,10 +11,10 @@ test('should able to setup athena', async () => {
     useDescription('this plugin does nothing')
     return cleanupHandler
   })
-  const noopPlugin: Plugin = {
+  const noopPlugin = definePlugin({
     name: 'noop',
     setup: setupHandler
-  }
+  })
   const athena = createAthena().add(noopPlugin).run()
   expect(setupHandler).toHaveBeenCalledOnce()
   await athena.stop()

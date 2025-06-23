@@ -1,14 +1,35 @@
 import {
-  WorkflowEvent,
+  eventSource,
+  Workflow,
+  WorkflowContext,
   workflowEvent,
-  WorkflowEventData,
-  WorkflowContext, Workflow
+  WorkflowEvent,
+  WorkflowEventData
 } from '@llama-flow/core'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import * as z from 'zod/v4/core'
 
-export type Plugin = {
+type BasePlugin = {
   name: string
   setup (): (() => void) | void
+}
+
+type PluginWithSchema<Schema extends z.$ZodObject = z.$ZodObject> = {
+  name: string
+  config: Schema
+  setup (config: z.infer<Schema>): (() => void) | void
+}
+
+export type Plugin = BasePlugin | PluginWithSchema
+
+export function definePlugin<Schema extends z.$ZodObject = z.$ZodObject> (
+  plugin: PluginWithSchema<Schema>
+): PluginWithSchema
+export function definePlugin (
+  plugin: BasePlugin
+): BasePlugin
+export function definePlugin (plugin: any): any {
+  return plugin
 }
 
 type PrimitiveArgument = {
@@ -68,25 +89,37 @@ export interface Explanation {
 
 export interface AthenaTool<
   Args extends Record<string, Argument> = Record<string, Argument>,
-  RetVals extends Argument | Record<string, Argument> = Argument,
+  ReturnVals extends Argument | Record<string, Argument> = Argument,
 > {
   name: string;
   description: string;
   args: Args;
-  retvals: RetVals;
+  returnVals: ReturnVals;
   fn: (args: {
     [K in keyof Args]: Args[K] extends Argument
       ? ArgumentInstance<Args[K]>
       : never;
-  }) => Promise<RetVals extends Argument ? ArgumentInstance<RetVals> : {
-    [K in keyof RetVals]: RetVals[K] extends Argument
-      ? ArgumentInstance<RetVals[K]>
+  }) => Promise<ReturnVals extends Argument ? ArgumentInstance<ReturnVals> : {
+    [K in keyof ReturnVals]: ReturnVals[K] extends Argument
+      ? ArgumentInstance<ReturnVals[K]>
       : never;
   }>;
-  explainArgs?: (args: Record<string, any>) => Explanation;
+  explainArgs?: (args: {
+    [K in keyof Args]: Args[K] extends Argument
+      ? ArgumentInstance<Args[K]>
+      : never;
+  }) => Explanation;
   explainReturnVals?: (
-    args: Record<string, any>,
-    retvals: Record<string, any>
+    args: {
+      [K in keyof Args]: Args[K] extends Argument
+        ? ArgumentInstance<Args[K]>
+        : never;
+    },
+    returnVals: ReturnVals extends Argument ? ArgumentInstance<ReturnVals> : {
+      [K in keyof ReturnVals]: ReturnVals[K] extends Argument
+        ? ArgumentInstance<ReturnVals[K]>
+        : never;
+    }
   ) => Explanation;
 }
 
@@ -94,15 +127,20 @@ export interface AthenaTool<
  * @internal
  */
 export type PluginState = {
-  description: string
-  tools: Map<string, AthenaTool>
+  get name (): string
+  description: string | null
 
-  get context (): {
+  get config (): Readonly<Record<string, any>>;
+  get tools (): Map<string, AthenaTool>
+
+  get athenaContext (): {
+    get stream (): WorkflowContext['stream'];
     handle: Workflow['handle'];
     sendEvent: WorkflowContext['sendEvent'];
     wait (handler: (stream: WorkflowContext['stream']) => Promise<void>): Promise<void>
   }
 
+  epoch: number
   cleanup?: () => void
 }
 
@@ -164,7 +202,7 @@ export function useTool<
 
 export function sendEvent<Data> (event: WorkflowEventData<Data>) {
   const pluginState = usePluginState()
-  pluginState.context.sendEvent(event)
+  pluginState.athenaContext.sendEvent(event)
 }
 
 export function onEvent<Data> (
@@ -172,12 +210,26 @@ export function onEvent<Data> (
   handler: (data: WorkflowEventData<Data>) => void | WorkflowEventData<unknown> | Promise<void> | Promise<WorkflowEventData<unknown>>
 ) {
   const pluginState = usePluginState()
-  const { handle } = pluginState.context
+  const { handle } = pluginState.athenaContext
   handle([event], handler)
 }
 
 export {
-  workflowEvent as defineEvent
+  eventSource,
+  WorkflowEvent,
+  WorkflowEventData,
+}
+
+export function defineEvent (
+  displayName?: string
+) {
+  const pluginState = usePluginState()
+  const name = pluginState.name
+  const uniqueId = name +
+    (displayName ? `/${displayName}/${pluginState.epoch}` : pluginState.epoch++)
+  return workflowEvent({
+    uniqueId
+  })
 }
 
 export function useDescription (
@@ -185,4 +237,9 @@ export function useDescription (
 ) {
   const pluginState = usePluginState()
   pluginState.description = description
+}
+
+export function useStream (): WorkflowContext['stream'] {
+  const pluginState = usePluginState()
+  return pluginState.athenaContext.stream
 }
