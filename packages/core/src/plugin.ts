@@ -1,6 +1,6 @@
 import {
   InferWorkflowEventData,
-  Workflow,
+  Workflow, WorkflowEvent,
   workflowEvent,
   WorkflowEventData
 } from '@llama-flow/core'
@@ -8,6 +8,12 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 
 export type Plugin = {
   setup (): void
+}
+
+export type Tool = {
+  readonly name: string;
+  readonly description: string;
+  readonly args: any
 }
 
 /**
@@ -43,6 +49,21 @@ export const pluginRegisterEvent = workflowEvent()
  * @internal
  */
 export const pluginUnregisterEvent = workflowEvent()
+
+export function emitEvent () {
+
+}
+
+export function addTool () {
+
+}
+
+export function onEvent<Data> (
+  event: WorkflowEvent<Data>,
+  handler: (data: WorkflowEventData<Data>) => void | WorkflowEventData<unknown> | Promise<void> | Promise<WorkflowEventData<unknown>>
+) {
+
+}
 
 export function useDescription (
   description: string

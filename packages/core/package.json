@@ -6,6 +6,7 @@
     "url": "https://github.com/Athena-AI-Lab/athena-core.git"
   },
   "dependencies": {
+    "@athena/priompt": "workspace:*",
     "@llama-flow/core": "^0.4.4"
   },
   "devDependencies": {
