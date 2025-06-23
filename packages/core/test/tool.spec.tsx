@@ -1,14 +1,18 @@
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
 import {
-  useTool, onEvent,
+  useTool,
+  onEvent,
   Plugin,
-  useDescription
+  useDescription,
+  sendEvent,
+  defineEvent
 } from '../src/plugin.js'
 import { createAthena } from '../src/index.js'
 
 test('should able to add tool to plugin', async () => {
-  const noopPlugin: Plugin = {
-    name: 'noop',
+  const messageSentEvent = defineEvent<string>()
+  const examplePlugin: Plugin = {
+    name: 'example',
     setup () {
       useDescription('this plugin does nothing')
       useTool(
@@ -22,14 +26,17 @@ test('should able to add tool to plugin', async () => {
           }
         },
         {
-          fn: async () => 'example result'
+          fn: async () => {
+            sendEvent(messageSentEvent.with('example result'))
+            return 'example result'
+          }
         }
       )
-      // onEvent('', () => {
-      //
-      // })
+      onEvent(messageSentEvent, ({ data }) => {
+        expect(data).toBe('example result')
+      })
     }
   }
-  const athena = createAthena().add(noopPlugin).run()
+  const athena = createAthena().add(examplePlugin).run()
   await athena.stop()
 })

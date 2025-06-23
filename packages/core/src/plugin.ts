@@ -176,6 +176,10 @@ export function onEvent<Data> (
   handle([event], handler)
 }
 
+export {
+  workflowEvent as defineEvent
+}
+
 export function useDescription (
   description: string
 ) {
