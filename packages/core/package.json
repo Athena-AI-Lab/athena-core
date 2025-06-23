@@ -1,0 +1,14 @@
+{
+  "name": "@athena/core",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Athena-AI-Lab/athena-core.git"
+  },
+  "dependencies": {
+    "@llama-flow/core": "^0.4.4"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
