@@ -3,9 +3,10 @@ import {
 } from '@llama-flow/core'
 import {
   pluginRegisterEvent,
-  workflowAsyncContext,
+  pluginStateAsyncContext,
   Plugin,
-  PluginState, pluginUnregisterEvent
+  PluginState,
+  pluginUnregisterEvent
 } from './plugin.js'
 
 export type AthenaConfig = {
@@ -24,21 +25,34 @@ export function createAthena (): AthenaConfig {
   const coreWorkflow = createWorkflow()
   const pluginSet = new Set<Plugin>()
   const pluginStateMap = new WeakMap<Plugin, PluginState>()
-  coreWorkflow.handle([pluginRegisterEvent], (pluginRegister) => {
+  const { sendEvent, stream } = coreWorkflow.createContext()
+  // one trick to keep the latest stream
+  let latest = stream
+
+  async function waitFn (handler: (s: typeof stream) => Promise<unknown>) {
+    const [l, r] = latest.tee()
+    await handler(l)
+    latest = r
+  }
+
+  coreWorkflow.handle([pluginRegisterEvent], () => {
     pluginSet.values().every((plugin) => {
       const pluginState = pluginStateMap.get(plugin)!
-      const pluginWorkflow = pluginState.workflow
-      const { sendEvent } = pluginWorkflow.createContext()
-      sendEvent(pluginRegister)
+      const cleanup = pluginStateAsyncContext.run(pluginState,
+        () => plugin.setup())
+      if (cleanup) {
+        pluginState.cleanup = cleanup
+      }
     })
     return haltEvent.with()
   })
-  coreWorkflow.handle([pluginUnregisterEvent], (pluginUnregister) => {
+
+  coreWorkflow.handle([pluginUnregisterEvent], () => {
     pluginSet.values().every((plugin) => {
       const pluginState = pluginStateMap.get(plugin)!
-      const pluginWorkflow = pluginState.workflow
-      const { sendEvent } = pluginWorkflow.createContext()
-      sendEvent(pluginUnregister)
+      if (pluginState.cleanup) {
+        pluginState.cleanup()
+      }
     })
     return haltEvent.with()
   })
@@ -46,30 +60,30 @@ export function createAthena (): AthenaConfig {
   const config: AthenaConfig = {
     add: (plugin: Plugin) => {
       pluginSet.add(plugin)
-      const pluginWorkflow = createWorkflow()
       const pluginState: PluginState = {
-        description: null!,
-        workflow: pluginWorkflow
+        description: '',
+        tools: new Map(),
+        get context() {
+          return {
+            sendEvent,
+            handle: coreWorkflow.handle,
+            wait: waitFn
+          }
+        }
       }
-      workflowAsyncContext.run(pluginState, () => plugin.setup())
       pluginStateMap.set(plugin, pluginState)
       return config
     },
     run: () => {
-      const { sendEvent, stream: registerStream } = coreWorkflow.createContext()
       sendEvent(pluginRegisterEvent.with())
       return {
         get plugins (): ReadonlySet<Plugin> {
           return new Set(pluginSet)
         },
         async stop (): Promise<void> {
-          await registerStream.until(haltEvent).toArray()
-          const {
-            sendEvent,
-            stream: unregisterStream
-          } = coreWorkflow.createContext()
+          await waitFn(s => s.until(haltEvent).toArray())
           sendEvent(pluginUnregisterEvent.with())
-          await unregisterStream.until(haltEvent).toArray()
+          await waitFn(s => s.until(haltEvent).toArray())
         }
       }
     }
