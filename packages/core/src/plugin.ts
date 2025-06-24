@@ -8,6 +8,7 @@ import {
 } from '@llama-flow/core'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import * as z from 'zod/v4/core'
+import { AthenaContext } from './index.js'
 
 type BasePlugin = {
   name: string
@@ -133,12 +134,7 @@ export type PluginState = {
   get config (): Readonly<Record<string, any>>;
   get tools (): Map<string, AthenaTool>
 
-  get athenaContext (): {
-    get stream (): WorkflowContext['stream'];
-    handle: Workflow['handle'];
-    sendEvent: WorkflowContext['sendEvent'];
-    wait (handler: (stream: WorkflowContext['stream']) => Promise<void>): Promise<void>
-  }
+  get athenaContext (): AthenaContext
 
   epoch: number
   cleanup?: () => void
@@ -237,9 +233,4 @@ export function useDescription (
 ) {
   const pluginState = usePluginState()
   pluginState.description = description
-}
-
-export function useStream (): WorkflowContext['stream'] {
-  const pluginState = usePluginState()
-  return pluginState.athenaContext.stream
 }

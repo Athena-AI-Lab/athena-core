@@ -23,6 +23,9 @@ const eventDataToPrompt = (event: WorkflowEventData<any>): string => {
 <data>${event.data}</data>
 </event>`
 }
+const toolCallResultTOPrompt = () => {
+
+}
 
 function initialPrompt (): string {
   return ''
