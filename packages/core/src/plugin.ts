@@ -1,7 +1,5 @@
 import {
   eventSource,
-  Workflow,
-  WorkflowContext,
   workflowEvent,
   WorkflowEvent,
   WorkflowEventData
