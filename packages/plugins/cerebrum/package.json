@@ -1,0 +1,12 @@
+{
+  "name": "cerebrum",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Athena-AI-Lab/athena-core.git"
+  },
+  "private": true,
+  "dependencies": {
+    "@athena/core": "workspace:*",
+    "zod": "^3.25.67"
+  }
+}

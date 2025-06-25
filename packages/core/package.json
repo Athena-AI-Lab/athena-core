@@ -1,0 +1,32 @@
+{
+  "name": "@athena/core",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    }
+  },
+  "scripts": {
+    "build": "bunchee",
+    "dev": "bunchee --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Athena-AI-Lab/athena-core.git"
+  },
+  "dependencies": {
+    "@llama-flow/core": "^0.4.4"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "bunchee": "^6.5.3",
+    "vitest": "^3.2.4",
+    "zod": "^3.25.67"
+  }
+}
