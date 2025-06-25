@@ -1,10 +1,12 @@
 import {
   useTool,
   definePlugin,
-  useStream,
   eventSource,
-  WorkflowEventData
+  WorkflowEventData,
+  onEvent,
+  useAthenaContext
 } from '@athena/core/plugin'
+import { toolResultEvent } from '@athena/core'
 import * as z from 'zod/v4'
 import OpenAI from 'openai'
 import image2uri from 'image2uri'
@@ -17,9 +19,17 @@ const defaultHeaders = {
 
 const eventDataToPrompt = (event: WorkflowEventData<any>): string => {
   const source = eventSource(event)!
-  const id = source.uniqueId
+  const name = source.uniqueId
+  if (toolResultEvent.include(event)) {
+    return `<tool_result>
+<name>${name}</name>
+<id>${event.data.id}</id>
+<result>${event.data}</result>
+</tool_result>
+`
+  }
   return `<event>
-<name>${id}</name>
+<name>${name}</name>
 <data>${event.data}</data>
 </event>`
 }
@@ -45,7 +55,7 @@ export default definePlugin({
   setup ({ base_url, api_key, image_supported }) {
     const imageUrls: string[] = []
     const eventQueue: WorkflowEventData<any>[] = []
-    const prompts: Array<ChatCompletionMessageParam> = []
+    const messages: Array<ChatCompletionMessageParam> = []
     const openai = new OpenAI({
       baseURL: base_url,
       apiKey: api_key,
@@ -85,18 +95,24 @@ export default definePlugin({
         }
       )
     }
-    const athenaStream = useStream()
+    const { waitFor } = useAthenaContext()
+    onEvent(toolResultEvent, toolResult => {
+      console.log('tool result', toolResult)
+    })
+    function processQueue () {
+      const eventsPrompts = eventQueue.slice().map(eventDataToPrompt)
+      const messagePrompts = messages.slice()
+    }
     let timeoutSignal = AbortSignal.timeout(delay)
-    athenaStream.forEach((ev) => {
-      eventQueue.push(ev)
-      if (timeoutSignal.aborted) {
-        // process queue
-        const eventsPrompts = eventQueue.slice().map(eventDataToPrompt)
-        const promptSnapshot = prompts.slice()
-
-        timeoutSignal = AbortSignal.timeout(delay)
-      }
-    }).catch()
+    waitFor(async stream =>
+      stream.forEach((ev) => {
+        eventQueue.push(ev)
+        if (timeoutSignal.aborted) {
+          processQueue()
+          timeoutSignal = AbortSignal.timeout(delay)
+        }
+      })
+    ).catch(console.error)
     //
     // afterEventDefined((event) => {
     //   onEvent(event, async ({ data }) => {

@@ -232,3 +232,8 @@ export function useDescription (
   const pluginState = usePluginState()
   pluginState.description = description
 }
+
+export function useAthenaContext(): AthenaContext {
+  const pluginState = usePluginState()
+  return pluginState.athenaContext;
+}

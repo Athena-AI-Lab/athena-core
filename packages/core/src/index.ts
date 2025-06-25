@@ -26,10 +26,12 @@ export type Athena = {
 const haltEvent = workflowEvent()
 
 export const toolCallEvent = workflowEvent<{
+  id: string;
   name: string;
   args: Record<string, any>;
 }>()
 export const toolResultEvent = workflowEvent<{
+  id: string;
   name: string;
   args: Record<string, any>;
   result: any;
@@ -86,6 +88,7 @@ export function createAthena (): AthenaConfig {
     }
     const result: any = await tool.fn.call(null, data.args as any)
     return toolResultEvent.with({
+      id: data.id,
       name: data.name,
       args: data.args,
       result
@@ -119,11 +122,11 @@ export function createAthena (): AthenaConfig {
     },
     run: () => {
       ({ sendEvent, stream: latest } = coreWorkflow.createContext())
-      ;context = {
+      context = Object.freeze({
         sendEvent,
         handle: coreWorkflow.handle,
         waitFor
-      }
+      })
       sendEvent(pluginRegisterEvent.with())
       return {
         get context(): AthenaContext {
