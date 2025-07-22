@@ -125,27 +125,22 @@ Trust us: the AI will probably do a better job explaining it than we ever could.
 Our mission is to realize **human-level intelligence**, or _AGI_, by evolving Athena into a truly autonomous and capable agent. Here's a more detailed roadmap of what we're working on:
 
 - [ ] **Autonomous Code Writing**
-
   - Enable Athena to iteratively write and improve its own plugins
 
 - [ ] **Robust Browser Automation**
-
   - Improve reliability and fault tolerance in headless and headful modes
   - Add advanced DOM element parsing and interaction strategies
 
 - [ ] **Context Management Improvements**
-
   - Adjust prompt context windows for different LLMs
   - Implement context summarization for out-of-window context
 
 - [ ] **Long-Term Memory with RAG**
-
   - Set up vector database integration for persistent knowledge
   - Enable memory recall across sessions and tasks
   - Support user-specific long-term context embedding and retrieval
 
 - [ ] **Image and Video Model Expansion**
-
   - Integrate support for more image and video generation models
   - Enable multimodal workflows that combine text, image, and video reasoning
 
