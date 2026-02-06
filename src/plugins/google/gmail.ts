@@ -176,7 +176,7 @@ export class GmailClient {
     body: string,
     replyAll: boolean = false,
   ): Promise<string> {
-    const original = await this.getMessage(messageId);
+    const original = await this.getMessage(messageId, true);
     if (!original) {
       throw new Error(`Message ${messageId} not found`);
     }
@@ -185,13 +185,20 @@ export class GmailClient {
       userId: "me",
       id: messageId,
       format: "metadata",
-      metadataHeaders: ["Subject", "From", "To", "Cc", "Message-ID", "References"],
+      metadataHeaders: [
+        "Subject",
+        "From",
+        "To",
+        "Cc",
+        "Message-ID",
+        "References",
+      ],
     });
 
     const headers = originalResponse.data.payload?.headers || [];
     const getHeader = (name: string) =>
-      headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ||
-      "";
+      headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())
+        ?.value || "";
 
     const messageIdHeader = getHeader("Message-ID");
     const existingRefs = getHeader("References");
@@ -205,9 +212,7 @@ export class GmailClient {
     if (replyAll) {
       const originalTo = getHeader("To");
       const originalCc = getHeader("Cc");
-      const allRecipients = [originalTo, originalCc]
-        .filter(Boolean)
-        .join(", ");
+      const allRecipients = [originalTo, originalCc].filter(Boolean).join(", ");
       if (allRecipients) {
         cc = allRecipients;
       }
@@ -218,11 +223,22 @@ export class GmailClient {
       subject = `Re: ${subject}`;
     }
 
+    // Quote the original message
+    const quotedOriginal = original.body
+      ? original.body
+          .split("\n")
+          .map((line) => `> ${line}`)
+          .join("\n")
+      : "";
+    const fullBody = quotedOriginal
+      ? `${body}\n\nOn ${original.date}, ${original.from} wrote:\n${quotedOriginal}`
+      : body;
+
     return this.sendMessage({
       to,
       cc,
       subject,
-      body,
+      body: fullBody,
       threadId: original.threadId,
       inReplyTo: messageIdHeader,
       references,

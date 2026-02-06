@@ -6,13 +6,18 @@ import { PluginBase } from "../plugin-base.js";
 export default class Telegram extends PluginBase {
   bot!: TelegramBot;
   me!: TelegramBot.User;
+  athena!: Athena;
   boundAthenaPrivateEventHandler!: (event: string, args: Dict<any>) => void;
+  // Maps confirmation_id to the chat_id and message_id where the confirmation was sent
+  pendingConfirmations: Map<string, { chat_id: number; message_id: number }> =
+    new Map();
 
   desc() {
     return `You can send and receive messages to and from Telegram. Your username in Telegram is ${this.me.username} and your display name is ${this.me.first_name}. For group chats, you don't have to respond to every message. Just respond when you are asked to do something or have something useful to say. For private chats, you should respond to every message, unless being explicitly told not to. When you receive a message, you can reply to it by calling the "telegram/send-message" tool. Be mindful about which chat you are in and the type of the chat before sending a message.`;
   }
 
   async load(athena: Athena) {
+    this.athena = athena;
     this.boundAthenaPrivateEventHandler =
       this.athenaPrivateEventHandler.bind(this);
 
@@ -668,6 +673,27 @@ export default class Telegram extends PluginBase {
       });
 
       this.bot.on("callback_query", async (query) => {
+        // Check if this is a confirmation callback
+        if (query.data?.startsWith("google_confirm:")) {
+          const parts = query.data.split(":");
+          if (parts.length === 3) {
+            const confirmationId = parts[1];
+            const confirmed = parts[2] === "yes";
+            const chatId = query.message?.chat.id;
+            const messageId = query.message?.message_id;
+            if (chatId && messageId) {
+              this.handleConfirmationCallback(
+                confirmationId,
+                confirmed,
+                chatId,
+                messageId,
+              );
+            }
+            await this.bot.answerCallbackQuery(query.id);
+            return;
+          }
+        }
+
         athena.emitEvent("telegram/callback-query-received", {
           id: query.id,
           from: {
@@ -706,6 +732,10 @@ export default class Telegram extends PluginBase {
   }
 
   athenaPrivateEventHandler(event: string, args: Dict<any>) {
+    if (event === "google/confirm-action") {
+      this.handleConfirmActionRequest(args);
+      return;
+    }
     if (args.content) {
       for (const chatId of this.config.admin_chat_ids) {
         this.bot
@@ -728,5 +758,63 @@ export default class Telegram extends PluginBase {
         this.bot.sendMessage(chatId, message).catch(() => {});
       }
     }
+  }
+
+  private async handleConfirmActionRequest(args: Dict<any>) {
+    const { confirmation_id, action_type, summary, details } = args;
+
+    // Send confirmation request to admin chats
+    for (const chatId of this.config.allowed_chat_ids) {
+      const messageText = `🔔 Confirmation Required\n\nAction: ${action_type}\n${summary}\n\n${details}`;
+      const message = await this.bot.sendMessage(chatId, messageText, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "✅ Yes",
+                callback_data: `google_confirm:${confirmation_id}:yes`,
+              },
+              {
+                text: "❌ No",
+                callback_data: `google_confirm:${confirmation_id}:no`,
+              },
+            ],
+          ],
+        },
+      });
+      this.pendingConfirmations.set(confirmation_id, {
+        chat_id: chatId,
+        message_id: message.message_id,
+      });
+      // Only send to first admin chat
+      break;
+    }
+  }
+
+  private handleConfirmationCallback(
+    confirmationId: string,
+    confirmed: boolean,
+    chatId: number,
+    messageId: number,
+  ) {
+    // Remove from pending
+    this.pendingConfirmations.delete(confirmationId);
+
+    // Update the message to show the result
+    const resultText = confirmed
+      ? "✅ Action confirmed"
+      : "❌ Action cancelled";
+    this.bot
+      .editMessageText(resultText, {
+        chat_id: chatId,
+        message_id: messageId,
+      })
+      .catch(() => {});
+
+    // Emit the response private event
+    this.athena.emitPrivateEvent("google/confirm-action-response", {
+      confirmation_id: confirmationId,
+      confirmed,
+    });
   }
 }

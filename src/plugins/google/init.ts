@@ -1,21 +1,31 @@
 import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
+import { randomUUID } from "crypto";
 
 import { Athena, Dict } from "../../core/athena.js";
 import { PluginBase } from "../plugin-base.js";
 import { GmailClient } from "./gmail.js";
 import { CalendarClient } from "./calendar.js";
 
+interface PendingConfirmation {
+  resolve: (confirmed: boolean) => void;
+  timeout: NodeJS.Timeout;
+}
+
 export default class Google extends PluginBase {
   private auth!: OAuth2Client;
   private gmail!: GmailClient;
   private calendar!: CalendarClient;
+  private athena!: Athena;
+  private pendingConfirmations: Map<string, PendingConfirmation> = new Map();
+  private boundConfirmationHandler!: (event: string, args: Dict<any>) => void;
 
   desc(): string | null {
-    return "Google integration providing Gmail and Calendar access.";
+    return "Google integration providing Gmail and Calendar access. When you are trying to send/reply to an email or create/update/delete a calendar event, don't notify the user until the tool call has returned.";
   }
 
   async load(athena: Athena) {
+    this.athena = athena;
     this.auth = new google.auth.OAuth2(
       this.config.client_id,
       this.config.client_secret,
@@ -31,8 +41,47 @@ export default class Google extends PluginBase {
       this.config.default_timezone || "UTC",
     );
 
+    this.boundConfirmationHandler = this.handleConfirmationResponse.bind(this);
+    athena.on("private-event", this.boundConfirmationHandler);
+
     this.registerGmailTools(athena);
     this.registerCalendarTools(athena);
+  }
+
+  private handleConfirmationResponse(event: string, args: Dict<any>) {
+    if (event !== "google/confirm-action-response") {
+      return;
+    }
+    const { confirmation_id, confirmed } = args;
+    const pending = this.pendingConfirmations.get(confirmation_id);
+    if (pending) {
+      clearTimeout(pending.timeout);
+      this.pendingConfirmations.delete(confirmation_id);
+      pending.resolve(confirmed);
+    }
+  }
+
+  private requestConfirmation(
+    action_type: string,
+    summary: string,
+    details: string,
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      const confirmation_id = randomUUID();
+      const timeout = setTimeout(() => {
+        this.pendingConfirmations.delete(confirmation_id);
+        resolve(false);
+      }, 5 * 60 * 1000); // 5 minute timeout
+
+      this.pendingConfirmations.set(confirmation_id, { resolve, timeout });
+
+      this.athena.emitPrivateEvent("google/confirm-action", {
+        confirmation_id,
+        action_type,
+        summary,
+        details,
+      });
+    });
   }
 
   private registerGmailTools(athena: Athena) {
@@ -288,6 +337,17 @@ export default class Google extends PluginBase {
       },
       {
         fn: async (args: Dict<any>) => {
+          const recipients = [args.to, args.cc, args.bcc]
+            .filter(Boolean)
+            .join(", ");
+          const confirmed = await this.requestConfirmation(
+            "send_email",
+            `Send email to ${recipients}`,
+            `Subject: ${args.subject}\n\n${args.body}`,
+          );
+          if (!confirmed) {
+            throw new Error("Email sending was cancelled by user");
+          }
           const messageId = await this.gmail.sendMessage({
             to: args.to,
             subject: args.subject,
@@ -337,6 +397,14 @@ export default class Google extends PluginBase {
       },
       {
         fn: async (args: Dict<any>) => {
+          const confirmed = await this.requestConfirmation(
+            "reply_email",
+            `Reply to message ${args.message_id}${args.reply_all ? " (reply all)" : ""}`,
+            args.body,
+          );
+          if (!confirmed) {
+            throw new Error("Email reply was cancelled by user");
+          }
           const messageId = await this.gmail.replyToMessage(
             args.message_id,
             args.body,
@@ -920,6 +988,25 @@ export default class Google extends PluginBase {
       },
       {
         fn: async (args: Dict<any>) => {
+          if (args.attendees && args.attendees.length > 0) {
+            const attendeesList = args.attendees.join(", ");
+            const details = [
+              `Event: ${args.summary}`,
+              `Time: ${args.start} - ${args.end}`,
+              args.location ? `Location: ${args.location}` : null,
+              args.description ? `Description: ${args.description}` : null,
+            ]
+              .filter(Boolean)
+              .join("\n");
+            const confirmed = await this.requestConfirmation(
+              "calendar_invite",
+              `Send calendar invite to ${attendeesList}`,
+              details,
+            );
+            if (!confirmed) {
+              throw new Error("Calendar invite was cancelled by user");
+            }
+          }
           const event = await this.calendar.createEvent(
             {
               summary: args.summary,
@@ -1190,6 +1277,15 @@ export default class Google extends PluginBase {
   }
 
   async unload(athena: Athena) {
+    athena.off("private-event", this.boundConfirmationHandler);
+
+    // Clear any pending confirmations
+    for (const [, pending] of this.pendingConfirmations) {
+      clearTimeout(pending.timeout);
+      pending.resolve(false);
+    }
+    this.pendingConfirmations.clear();
+
     // Gmail tools
     athena.deregisterTool("google/gmail-list-messages");
     athena.deregisterTool("google/gmail-get-message");
